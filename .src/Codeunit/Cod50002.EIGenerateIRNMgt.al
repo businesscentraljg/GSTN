@@ -155,7 +155,9 @@ codeunit 50002 "EI Generate IRN Mgt"
         ItemArray: JsonArray;
         EwbDtls: JsonObject;
         JsonText: Text;
+        NullToken: JsonToken;
     begin
+        SalesInvHdr.CalcFields(Amount, "Amount Including VAT");
         // Version
         Json.Add('Version', '1.1');
 
@@ -163,7 +165,7 @@ codeunit 50002 "EI Generate IRN Mgt"
         TranDtls.Add('TaxSch', 'GST');
         TranDtls.Add('SupTyp', 'B2B');
         TranDtls.Add('RegRev', 'Y');
-        TranDtls.Add('EcmGstin', 'null');
+        TranDtls.Add('EcmGstin', NullToken);
         TranDtls.Add('IgstOnIntra', 'N');
         Json.Add('TranDtls', TranDtls);
 
@@ -212,10 +214,10 @@ codeunit 50002 "EI Generate IRN Mgt"
         ValDtls.Add('CgstVal', 0);
         ValDtls.Add('SgstVal', 0);
         ValDtls.Add('IgstVal', SalesInvHdr."Amount");
-        ValDtls.Add('CesVal', 0);
-        ValDtls.Add('StCesVal', 0);
-        ValDtls.Add('Discount', 0);
-        ValDtls.Add('OthChrg', 0);
+        ValDtls.Add('CesVal', 508.94);
+        ValDtls.Add('StCesVal', 1202.46);
+        ValDtls.Add('Discount', 10);
+        ValDtls.Add('OthChrg', 20);
         ValDtls.Add('RndOffAmt', 0.3);
         ValDtls.Add('TotInvVal', SalesInvHdr."Amount Including VAT");
         Json.Add('ValDtls', ValDtls);
@@ -273,15 +275,20 @@ codeunit 50002 "EI Generate IRN Mgt"
         ExpDtls.Add('RefClm', 'N');
         ExpDtls.Add('ForCur', 'AED');
         ExpDtls.Add('CntCode', 'AE');
-        ExpDtls.Add('ExpDuty', 'null');
+
+
+
+        // Add ExpDuty as JSON null by using an uninitialized JsonToken
+        ExpDtls.Add('ExpDuty', NullToken);
+
 
         Json.Add('ExpDtls', ExpDtls);
 
         EwbDtls.Add('Transid', '37AMBPG7773M002');
         EwbDtls.Add('Transname', 'XYZ EXPORTS');
         EwbDtls.Add('Distance', 0);
-        EwbDtls.Add('Transdocno', 'null');
-        EwbDtls.Add('TransdocDt', 'null');
+        EwbDtls.Add('Transdocno', NullToken);
+        EwbDtls.Add('TransdocDt', NullToken);
         EwbDtls.Add('Vehno', 'ka123456');
         EwbDtls.Add('Vehtype', 'R');
         EwbDtls.Add('TransMode', '1');
