@@ -330,8 +330,8 @@ codeunit 50002 "EI Generate IRN Mgt"
                 ItemObj.Add('AssAmt', Line.Amount);
                 ItemObj.Add('GstRt', Line."VAT %");
                 ItemObj.Add('IgstAmt', Line.Amount);
-                ItemObj.Add('CgstAmt', Line."Amount" / 2);
-                ItemObj.Add('SgstAmt', Line."Amount" / 2);
+                ItemObj.Add('CgstAmt', 0);
+                ItemObj.Add('SgstAmt', 0);
                 ItemObj.Add('CesRt', 0);
                 ItemObj.Add('CesAmt', 0);
                 ItemObj.Add('CesNonAdvlAmt', 0);
