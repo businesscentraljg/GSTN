@@ -25,16 +25,22 @@ table 50002 "E-Invoice IRN Staging"
         // IRN DETAILS
         field(10; "IRN"; Text[100]) { }
         field(11; "Ack No."; BigInteger) { }
-        field(12; "Ack Date"; DateTime) { }
+        field(12; "Ack Date"; Text[100]) { }
         field(13; "EWB No."; BigInteger) { }
-        field(14; "EWB Valid Till"; DateTime) { }
+        field(14; "EWB Valid Till"; Text[100]) { }
 
         // STATUS
         field(15; "HTTP Status Code"; Integer) { }
         field(16; "Error Text"; Text[250]) { }
         field(17; "Request Id"; Text[50]) { }
         field(18; "GSTIN Used"; Code[15]) { }
-        field(19; "User Name Used"; Text[50]) { }
+        field(20; "Signed Invoice"; Blob) { }
+        field(21; "Signed QR Code"; Blob) { }
+        field(22; "IRN Status"; Text[50]) { }
+        field(23; "EWB Date"; Text[100]) { }
+        field(24; "Remarks"; Text[250]) { }
+        field(25; "InfCd"; Text[250]) { }
+        field(26; "Desc"; Text[250]) { }
     }
 
     keys

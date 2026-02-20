@@ -12,10 +12,6 @@ page 50002 "E-Invoice IRN Staging"
         {
             repeater(General)
             {
-                field("Document Type"; Rec."Document Type")
-                {
-                    ToolTip = 'Specifies the value of the Document Type field.', Comment = '%';
-                }
                 field("Document No."; Rec."Document No.")
                 {
                     ToolTip = 'Specifies the value of the Document No. field.', Comment = '%';
@@ -24,17 +20,9 @@ page 50002 "E-Invoice IRN Staging"
                 {
                     ToolTip = 'Specifies the value of the Posting Date field.', Comment = '%';
                 }
-                field("Request JSON"; Rec."Request JSON")
-                {
-                    ToolTip = 'Specifies the value of the Request JSON field.', Comment = '%';
-                }
                 field("Request DateTime"; Rec."Request DateTime")
                 {
                     ToolTip = 'Specifies the value of the Request DateTime field.', Comment = '%';
-                }
-                field("Response JSON"; Rec."Response JSON")
-                {
-                    ToolTip = 'Specifies the value of the Response JSON field.', Comment = '%';
                 }
                 field(Success; Rec.Success)
                 {
@@ -44,10 +32,6 @@ page 50002 "E-Invoice IRN Staging"
                 {
                     ToolTip = 'Specifies the value of the Message field.', Comment = '%';
                 }
-                field(IRN; Rec.IRN)
-                {
-                    ToolTip = 'Specifies the value of the IRN field.', Comment = '%';
-                }
                 field("Ack No."; Rec."Ack No.")
                 {
                     ToolTip = 'Specifies the value of the Ack No. field.', Comment = '%';
@@ -56,13 +40,45 @@ page 50002 "E-Invoice IRN Staging"
                 {
                     ToolTip = 'Specifies the value of the Ack Date field.', Comment = '%';
                 }
+                field(IRN; Rec.IRN)
+                {
+                    ToolTip = 'Specifies the value of the IRN field.', Comment = '%';
+                }
+                field("Signed Invoice"; Rec."Signed Invoice")
+                {
+                    ToolTip = 'Specifies the value of the Signed Invoice field.', Comment = '%';
+                }
+                field("Signed QR Code"; Rec."Signed QR Code")
+                {
+                    ToolTip = 'Specifies the value of the Signed QR Code field.', Comment = '%';
+                }
+                field("IRN Status"; Rec."IRN Status")
+                {
+                    ToolTip = 'Specifies the value of the IRN Status field.', Comment = '%';
+                }
                 field("EWB No."; Rec."EWB No.")
                 {
                     ToolTip = 'Specifies the value of the EWB No. field.', Comment = '%';
                 }
+                field("EWB Date"; Rec."EWB Date")
+                {
+                    ToolTip = 'Specifies the value of the EWB Date field.', Comment = '%';
+                }
                 field("EWB Valid Till"; Rec."EWB Valid Till")
                 {
                     ToolTip = 'Specifies the value of the EWB Valid Till field.', Comment = '%';
+                }
+                field(Remarks; Rec.Remarks)
+                {
+                    ToolTip = 'Specifies the value of the Remarks field.', Comment = '%';
+                }
+                field(InfCd; Rec.InfCd)
+                {
+                    ToolTip = 'Specifies the value of the InfCd field.', Comment = '%';
+                }
+                field(Desc; Rec.Desc)
+                {
+                    ToolTip = 'Specifies the value of the Desc field.', Comment = '%';
                 }
                 field("HTTP Status Code"; Rec."HTTP Status Code")
                 {
@@ -79,10 +95,6 @@ page 50002 "E-Invoice IRN Staging"
                 field("GSTIN Used"; Rec."GSTIN Used")
                 {
                     ToolTip = 'Specifies the value of the GSTIN Used field.', Comment = '%';
-                }
-                field("User Name Used"; Rec."User Name Used")
-                {
-                    ToolTip = 'Specifies the value of the User Name Used field.', Comment = '%';
                 }
             }
         }

@@ -33,9 +33,10 @@ codeunit 50002 "EI Generate IRN Mgt"
         Request.Content := Content;
         Content.ReadAs(ResponseText);
         Client.Send(Request, Response); */
-
+        JSONTest();
         RequestId := CreateGuid();
-        RequestJson := BuildInvoiceJson(SalesInvHdr);
+        // RequestJson := BuildInvoiceJson(SalesInvHdr);
+        RequestJson := JsonText;
 
         if Setup."Show Message" then
             Message(RequestJson);
@@ -67,13 +68,14 @@ codeunit 50002 "EI Generate IRN Mgt"
         if Setup."Show Message" then
             Message(ResponseText);
 
-        if not JsonResp.ReadFrom(ResponseText) then
-            Error('Invalid response JSON');
+        // if not JsonResp.ReadFrom(ResponseText) then
+        //     Error('Invalid response JSON');
 
         // -------------------------------
         // CREATE STAGING (INSERT ONCE)
         // -------------------------------
         Staging.Init();
+        Staging.Insert();
         Staging."Document Type" := Staging."Document Type"::Invoice;
         Staging."Document No." := SalesInvHdr."No.";
         Staging."Posting Date" := SalesInvHdr."Posting Date";
@@ -83,16 +85,17 @@ codeunit 50002 "EI Generate IRN Mgt"
         SaveTextToBlob(RequestJson, Staging, 'Request JSON');
         SaveTextToBlob(ResponseText, Staging, 'Response JSON');
         Staging."HTTP Status Code" := Response.HttpStatusCode();
-        Staging.Insert(true);
-
+        // Parse Response
         ParseIRNResponse(ResponseText, Staging);
 
+        // Insert staging
+        Staging.Modify();
 
         if Staging.Success then begin
-            SalesInvHdr."IRN Hash" := Staging."IRN";
+            // SalesInvHdr."IRN Hash" := Staging."IRN";
             // SalesInvHdr."IRN Ack No." := Format(Staging."Ack No.");
             // SalesInvHdr."IRN Ack Date" := DT2Date(Staging."Ack Date");
-            SalesInvHdr.Modify(true);
+            // SalesInvHdr.Modify(true);
         end;
     end;
 
@@ -101,18 +104,20 @@ codeunit 50002 "EI Generate IRN Mgt"
         Root: JsonObject;
         Result: JsonObject;
         Token: JsonToken;
+        JA: JsonArray;
+        JO: JsonObject;
     begin
         Root.ReadFrom(ResponseText);
 
-        // success
+        // Success
         if Root.Get('success', Token) then
             Staging.Success := Token.AsValue().AsBoolean();
 
-        // message
+        // Message
         if Root.Get('message', Token) then
             Staging.Message := Token.AsValue().AsText();
 
-        // result object
+        // Result object
         if Root.Get('result', Token) then begin
             Result := Token.AsObject();
 
@@ -123,16 +128,73 @@ codeunit 50002 "EI Generate IRN Mgt"
                 Staging."Ack No." := Token.AsValue().AsBigInteger();
 
             if Result.Get('AckDt', Token) then
-                Staging."Ack Date" := Token.AsValue().AsDateTime();
+                Staging."Ack Date" := Token.AsValue().AsText();
+
+            if Result.Get('SignedInvoice', Token) then
+                SaveTextToBlob(Token.AsValue().AsText(), Staging, 'Signed Invoice');
+
+            if Result.Get('SignedQRCode', Token) then
+                SaveTextToBlob(Token.AsValue().AsText(), Staging, 'Signed QR Code');
+
+            if Result.Get('Status', Token) then
+                Staging."IRN Status" := Token.AsValue().AsText();
 
             if Result.Get('EwbNo', Token) then
                 Staging."EWB No." := Token.AsValue().AsBigInteger();
 
+            if Result.Get('EwbDt', Token) then
+                Staging."EWB Date" := Token.AsValue().AsText();
+
             if Result.Get('EwbValidTill', Token) then
-                Staging."EWB Valid Till" := Token.AsValue().AsDateTime();
+                Staging."EWB Valid Till" := Token.AsValue().AsText();
+
+            Clear(JO);
+            if Root.Get('info', Token) then begin
+                JA := Token.AsArray();
+
+                // 2️⃣ Check if array has elements
+                if JA.Count() > 0 then begin
+
+                    // 3️⃣ Get first object from array
+                    JA.Get(0, Token);
+
+                    // 4️⃣ Convert token to object
+                    JO := Token.AsObject();
+
+                    // 5️⃣ Read property from object
+
+                    if JO.Get('InfCd', Token) then
+                        Staging."InfCd" := Token.AsValue().AsText();
+
+                    if JO.Get('Desc', Token) then
+                        Staging."Desc" := Token.AsValue().AsText();
+
+                end;
+            end;
         end;
     end;
 
+    local procedure SaveTextToBlob(TextValue: Text; var Staging: Record "E-Invoice IRN Staging"; FieldName: Text)
+    var
+        OutStr: OutStream;
+    begin
+        case FieldName of
+            'Request JSON':
+                Staging."Request JSON".CreateOutStream(OutStr);
+
+            'Response JSON':
+                Staging."Response JSON".CreateOutStream(OutStr);
+
+            'Signed Invoice':
+                Staging."Signed Invoice".CreateOutStream(OutStr);
+
+            'Signed QR Code':
+                Staging."Signed QR Code".CreateOutStream(OutStr);
+        end;
+
+        OutStr.WriteText(TextValue);
+        Staging.Modify();
+    end;
 
     local procedure BuildInvoiceJson(SalesInvHdr: Record "Sales Invoice Header"): Text
     var
@@ -372,7 +434,7 @@ codeunit 50002 "EI Generate IRN Mgt"
         exit(Arr);
     end;
 
-    local procedure SaveTextToBlob(TextValue: Text; var Staging: Record "E-Invoice IRN Staging"; FieldName: Text)
+    /* local procedure SaveTextToBlob(TextValue: Text; var Staging: Record "E-Invoice IRN Staging"; FieldName: Text)
     var
         OutStr: OutStream;
     begin
@@ -383,7 +445,164 @@ codeunit 50002 "EI Generate IRN Mgt"
                 Staging."Response JSON".CreateOutStream(OutStr);
         end;
         OutStr.WriteText(TextValue);
+    end; */
+
+    var
+        JsonText: Text;
+
+    procedure JSONTest()
+
+    begin
+        JsonText :=
+    '{' +
+    '"Version":"1.1",' +
+    '"TranDtls":{' +
+        '"TaxSch":"GST",' +
+        '"SupTyp":"B2B",' +
+        '"RegRev":"Y",' +
+        '"EcmGstin":null,' +
+        '"IgstOnIntra":"N"' +
+    '},' +
+    '"DocDtls":{' +
+        '"Typ":"INV",' +
+        '"No":"INV103296-12",' +
+        '"Dt":"18/10/2025"' +
+    '},' +
+    '"SellerDtls":{' +
+        '"Gstin":"02AMBPG7773M002",' +
+        '"LglNm":"NIC company pvt ltd",' +
+        '"TrdNm":"NIC Industries",' +
+        '"Addr1":"5th block, kuvempu layout",' +
+        '"Addr2":"kuvempu layout",' +
+        '"Loc":"GANDHINAGAR",' +
+        '"Pin":175032,' +
+        '"Stcd":"02",' +
+        '"Ph":"9000000000",' +
+        '"Em":"abc@gmail.com"' +
+    '},' +
+    '"BuyerDtls":{' +
+        '"Gstin":"36AAGCT1587Q1ZJ",' +
+        '"LglNm":"XYZ company pvt ltd",' +
+        '"TrdNm":"XYZ Industries",' +
+        '"Pos":"12",' +
+        '"Addr1":"7th block, kuvempu layout",' +
+        '"Addr2":"kuvempu layout",' +
+        '"Loc":"GANDHINAGAR",' +
+        '"Pin":500055,' +
+        '"Stcd":"36",' +
+        '"Ph":"91111111111",' +
+        '"Em":"xyz@yahoo.com"' +
+    '},' +
+    '"ItemList":[{' +
+        '"SlNo":"1",' +
+        '"PrdDesc":"Rice",' +
+        '"IsServc":"N",' +
+        '"HsnCd":"30049099",' +
+        '"Barcde":"123456",' +
+        '"Qty":100.345,' +
+        '"FreeQty":10,' +
+        '"Unit":"BAG",' +
+        '"UnitPrice":99.545,' +
+        '"TotAmt":9988.84,' +
+        '"Discount":10,' +
+        '"PreTaxVal":1,' +
+        '"AssAmt":9978.84,' +
+        '"GstRt":12,' +
+        '"IgstAmt":1197.46,' +
+        '"CgstAmt":0,' +
+        '"SgstAmt":0,' +
+        '"CesRt":5,' +
+        '"CesAmt":498.94,' +
+        '"CesNonAdvlAmt":10,' +
+        '"StateCesRt":12,' +
+        '"StateCesAmt":1197.46,' +
+        '"StateCesNonAdvlAmt":5,' +
+        '"OthChrg":10,' +
+        '"TotItemVal":12897.7,' +
+        '"OrdLineRef":"3256",' +
+        '"OrgCntry":"AG",' +
+        '"PrdSlNo":"12345",' +
+        '"BchDtls":{' +
+            '"Nm":"123456",' +
+            '"Expdt":"01/08/2020",' +
+            '"wrDt":"01/09/2020"' +
+        '},' +
+        '"AttribDtls":[{' +
+            '"Nm":"Rice",' +
+            '"Val":"10000"' +
+        '}]' +
+    '}],' +
+    '"ValDtls":{' +
+        '"AssVal":9978.84,' +
+        '"CgstVal":0,' +
+        '"SgstVal":0,' +
+        '"IgstVal":1197.46,' +
+        '"CesVal":508.94,' +
+        '"StCesVal":1202.46,' +
+        '"Discount":10,' +
+        '"OthChrg":20,' +
+        '"RndOffAmt":0.3,' +
+        '"TotInvVal":12908' +
+    '},' +
+    '"PayDtls":{' +
+        '"Nm":"ABCDE",' +
+        '"Accdet":"5697389713210",' +
+        '"Mode":"Cash",' +
+        '"Fininsbr":"SBIN11000",' +
+        '"Payterm":"100",' +
+        '"Payinstr":"Gift",' +
+        '"Crtrn":"test",' +
+        '"Dirdr":"test",' +
+        '"Crday":100,' +
+        '"Paidamt":10000,' +
+        '"Paymtdue":5000' +
+    '},' +
+    '"RefDtls":{' +
+        '"InvRm":"TEST",' +
+        '"DocPerdDtls":{' +
+            '"InvStDt":"01/08/2020",' +
+            '"InvEndDt":"01/09/2020"' +
+        '},' +
+        '"PrecDocDtls":[{' +
+            '"InvNo":"DOC/002",' +
+            '"InvDt":"01/08/2020",' +
+            '"OthRefNo":"123456"' +
+        '}],' +
+        '"ContrDtls":[{' +
+            '"RecAdvRefr":"Doc/003",' +
+            '"RecAdvDt":"01/08/2020",' +
+            '"Tendrefr":"Abc001",' +
+            '"Contrrefr":"Co123",' +
+            '"Extrefr":"Yo456",' +
+            '"Projrefr":"Doc-456",' +
+            '"Porefr":"Doc-789",' +
+            '"PoRefDt":"01/08/2020"' +
+        '}]' +
+    '},' +
+    '"AddlDocDtls":[{' +
+        '"Url":"https://einv-apisandbox.nic.in",' +
+        '"Docs":"Test Doc",' +
+        '"Info":"Document Test"' +
+    '}],' +
+    '"ExpDtls":{' +
+        '"ShipBNo":"A-248",' +
+        '"ShipBDt":"01/08/2020",' +
+        '"Port":"INABG1",' +
+        '"RefClm":"N",' +
+        '"ForCur":"AED",' +
+        '"CntCode":"AE",' +
+        '"ExpDuty":null' +
+    '},' +
+    '"EwbDtls":{' +
+        '"Transid":"37AMBPG7773M002",' +
+        '"Transname":"XYZ EXPORTS",' +
+        '"Distance":0,' +
+        '"Transdocno":null,' +
+        '"TransdocDt":null,' +
+        '"Vehno":"ka123456",' +
+        '"Vehtype":"R",' +
+        '"TransMode":"1"' +
+    '}' +
+    '}';
     end;
-
-
 }
