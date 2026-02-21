@@ -15,13 +15,13 @@ pageextension 50000 "Customer Card Ext" extends "Customer Card"
 
                 trigger OnAction()
                 var
-                    GSTNMgr: Codeunit "GSTN Search Management";
+                    CU: Codeunit "Customer GSTN";
                 begin
                     Rec.TestField("GST Registration No.");
                     if not Confirm('This will fetch and update GSTN details for the current customer. Do you want to continue?', false) then
                         exit;
-                    
-                    GSTNMgr.SearchGSTNAndUpdateCustomer(Rec."No.");
+
+                    CU.GSTNSearch(Rec."No.");
                     CurrPage.Update();
                     Message('GSTN details fetched and updated successfully.');
                 end;

@@ -7,7 +7,7 @@ table 50001 "GSTN Search Staging"
     {
         field(1; "Customer No."; Code[20])
         {
-            Caption = 'Customer No.';
+            Caption = 'No.';
         }
         field(2; "GSTIN"; Code[15]) { }
         // ---- BASIC DETAILS ----
@@ -39,6 +39,9 @@ table 50001 "GSTN Search Staging"
         field(24; "Pr. Latitude"; Text[30]) { }
         field(25; "Pr. Longitude"; Text[30]) { }
         field(26; "Pr. Nature of Business"; Text[100]) { }
+        field(35; "Pr. Locality"; Text[100]) { }
+        field(36; "Pr. LandMark"; Text[100]) { }
+        field(37; "Pr. Geo Code Level"; Text[100]) { }
 
         // ---- ARRAYS STORED AS JSON TEXT ----
         field(27; "Nature of Business (JSON)"; Blob) { }
@@ -47,11 +50,22 @@ table 50001 "GSTN Search Staging"
         field(29; "Raw JSON Response"; Blob) { }
         field(30; "Created At"; DateTime) { }
         field(31; "Created By"; Text[50]) { }
-
+        field(32; "Success"; Boolean) { }
+        field(33; "Message"; Text[250]) { }
+        field(34; "Type"; Option)
+        {
+            OptionMembers = Vendor,Customer;
+        }
+        field(38; "Entry No."; Integer)
+        {
+            AutoIncrement = true;
+        }
+        field(39; "HTTP Status Code"; Integer) { }
+        field(40; "Error Text"; Text[250]) { }
     }
     keys
     {
-        key(PK; "Customer No.")
+        key(PK; "Entry No.")
         {
             Clustered = true;
         }

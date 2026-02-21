@@ -85,6 +85,7 @@ codeunit 50002 "EI Generate IRN Mgt"
         SaveTextToBlob(RequestJson, Staging, 'Request JSON');
         SaveTextToBlob(ResponseText, Staging, 'Response JSON');
         Staging."HTTP Status Code" := Response.HttpStatusCode();
+        Staging."Error Text" := Response.ReasonPhrase();
         // Parse Response
         ParseIRNResponse(ResponseText, Staging);
 
