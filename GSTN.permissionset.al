@@ -1,5 +1,7 @@
 namespace GSTN;
 
+using GSTN.GSTN;
+
 permissionset 50000 GSTN
 {
     Assignable = true;
@@ -11,8 +13,13 @@ permissionset 50000 GSTN
         table "GSTN Search Staging"=X,
         codeunit "EI Generate IRN Mgt"=X,
         codeunit "GSP Management"=X,
-        codeunit "GSTN Search Management"=X,
         page "E-Invoice IRN Staging"=X,
         page "GSP Authentication Setup"=X,
-        page "GSTN Search Staging"=X;
+        page "GSTN Search Staging"=X,
+        tabledata "EWay Bill Staging"=RIMD,
+        table "EWay Bill Staging"=X,
+        codeunit "Customer GSTN"=X,
+        codeunit "Generate E-Way Bill Enriched"=X,
+        codeunit "Vendor GSTN Search Management"=X,
+        page "EWay Bill Staging"=X;
 }

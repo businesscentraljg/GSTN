@@ -1,11 +1,8 @@
-namespace GSTN.GSTN;
-using Microsoft.Sales.Customer;
-
-codeunit 50004 "Customer GSTN"
+codeunit 50001 "Vendor GSTN Search Management"
 {
-    procedure GSTNSearch(CustomerNo: Code[20])
+    procedure VendorGSTNSearch(VendorNo: Code[20])
     var
-        Cust: Record Customer;
+        Vend: Record Vendor;
         Setup: Record "GSP Authentication Setup";
         GSPMgmt: Codeunit "GSP Management";
         Client: HttpClient;
@@ -18,12 +15,12 @@ codeunit 50004 "Customer GSTN"
     begin
         Setup.Get();
 
-        if not Cust.Get(CustomerNo) then
-            Error('Customer not found');
+        if not Vend.Get(VendorNo) then
+            Error('Vendor not found');
 
-        Cust.TestField("GST Registration No.");
+        Vend.TestField("GST Registration No.");
 
-        Url := Setup."Base URL" + '/test/enriched/commonapi/search?action=TP&gstin=' + Cust."GST Registration No.";
+        Url := Setup."Base URL" + '/test/enriched/commonapi/search?action=TP&gstin=' + Vend."GST Registration No.";
 
         Request.Method('GET');
         Request.SetRequestUri(Url);
@@ -46,9 +43,9 @@ codeunit 50004 "Customer GSTN"
         // -------------------------
         Staging.Init();
         Staging.Insert();
-        Staging.Type := Staging.Type::Customer;
-        Staging."No." := Cust."No.";
-        Staging.GSTIN := Cust."GST Registration No.";
+        Staging.Type := Staging.Type::Vendor;
+        Staging."No." := Vend."No.";
+        Staging.GSTIN := Vend."GST Registration No.";
         Staging."HTTP Status Code" := Response.HttpStatusCode();
         Staging."Error Text" := Response.ReasonPhrase();
         Staging."Created By" := UserId;
@@ -59,7 +56,7 @@ codeunit 50004 "Customer GSTN"
         Staging.Modify();
 
         // Update Customer from staging
-        UpdateCustomerFromGSTN(Cust, Staging);
+        UpdateVendorFromGSTN(Vend, Staging);
     end;
 
 
@@ -211,16 +208,16 @@ codeunit 50004 "Customer GSTN"
     end;
 
     // ===================================
-    // UPDATE CUSTOMER
+    // UPDATE VENDOR
     // ===================================
-    local procedure UpdateCustomerFromGSTN(var Cust: Record Customer; Staging: Record "GSTN Search Staging")
+    local procedure UpdateVendorFromGSTN(var Vend: Record Vendor; Staging: Record "GSTN Search Staging")
     begin
-        Cust.Address := Staging."Pr. Door No." + ' ' + Staging."Pr. Street";
-        Cust."Address 2" := Staging."Pr. Building Name";
-        Cust.Validate(City, Staging."Pr. Location");
-        Cust.County := Staging."Pr. District";
-        Cust.Validate("Post Code", Staging."Pr. Pincode");
+        Vend.Address := Staging."Pr. Door No." + ' ' + Staging."Pr. Street";
+        Vend."Address 2" := Staging."Pr. Building Name";
+        Vend.Validate(City, Staging."Pr. Location");
+        Vend.County := Staging."Pr. District";
+        Vend.Validate("Post Code", Staging."Pr. Pincode");
 
-        Cust.Modify(true);
+        Vend.Modify(true);
     end;
 }

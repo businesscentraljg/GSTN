@@ -5,7 +5,7 @@ table 50001 "GSTN Search Staging"
 
     fields
     {
-        field(1; "Customer No."; Code[20])
+        field(1; "No."; Code[20])
         {
             Caption = 'No.';
         }

@@ -16,9 +16,9 @@ page 50001 "GSTN Search Staging"
                 {
                     ToolTip = 'Specifies the value of the Type field.', Comment = '%';
                 }
-                field("Customer No."; Rec."Customer No.")
+                field("No."; Rec."No.")
                 {
-                    ToolTip = 'Specifies the value of the Customer No. field.', Comment = '%';
+                    ToolTip = 'Specifies the value of the No. field.', Comment = '%';
                 }
                 field(Success; Rec.Success)
                 {
