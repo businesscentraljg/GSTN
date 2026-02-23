@@ -1,4 +1,4 @@
-pageextension 50001 "Posted Sales Invoice Ext" extends "Posted Sales Invoice"
+pageextension 50001 "Posted Sales Invoice Ext1" extends "Posted Sales Invoice"
 {
     actions
     {

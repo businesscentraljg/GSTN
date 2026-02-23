@@ -1,4 +1,4 @@
-pageextension 50000 "Customer Card Ext" extends "Customer Card"
+pageextension 50000 "Customer Card Ext1" extends "Customer Card"
 {
     actions
     {

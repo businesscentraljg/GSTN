@@ -6,7 +6,7 @@
             "request": "launch",
             "type": "al",
             "environmentType": "Sandbox",
-            "environmentName": "India",
+            "environmentName": "IndiaGST",
             "tenant": "fa10e970-6172-4354-9d14-5b78b03a3346",
             // "startupObjectId": 22,
             // "startupObjectType": "Page",

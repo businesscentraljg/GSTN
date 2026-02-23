@@ -11,12 +11,24 @@
   "url": "",
   "logo": "",
   "dependencies": [
+   {
+    "id": "db643212-b7fb-4dd4-b5a8-cb44ac714461",
+    "name": "India GST",
+    "publisher": "Microsoft",
+    "version": "26.4.37194.39217"
+   },
+   {
+     "id": "c1eafb3f-e397-468e-bdb4-ecc5c317ca00",
+     "name": "Tax Engine",
+    "publisher": "Microsoft",
+     "version": "26.4.37194.37425"
+    },
     {
-     "id": "db643212-b7fb-4dd4-b5a8-cb44ac714461",
-     "name": "India GST",
-     "publisher": "Microsoft",
-     "version": "27.2.42879.45254"
-   }
+   "id": "d3c551dd-5903-4194-b153-04ced9d29a2c",
+   "name": "India Tax Base",
+   "publisher": "Microsoft",
+   "version": "26.4.37194.39217"
+  }    
   ],
   "screenshots": [],
   "platform": "1.0.0.0",
