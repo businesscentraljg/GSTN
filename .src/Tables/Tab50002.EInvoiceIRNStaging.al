@@ -20,7 +20,7 @@ table 50002 "E-Invoice IRN Staging"
         // RESPONSE
         field(7; "Response JSON"; Blob) { }
         field(8; "Success"; Boolean) { }
-        field(9; "Message"; Text[250]) { }
+        field(9; "Message"; Text[1024]) { }
 
         // IRN DETAILS
         field(10; "IRN"; Text[100]) { }

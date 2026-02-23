@@ -115,14 +115,20 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         ItemObj: JsonObject;
         SalesInvLine: Record "Sales Invoice Line";
         JsonText: Text;
+        RandomNo: Integer;
+        NewDocNo: Text;
     begin
+        Randomize();
+        RandomNo := Random(900) + 100; // Generates 100–999
+
+        NewDocNo := SalesInvNo + '-' + Format(RandomNo);
         // -------------------------
         // Header Values
         // -------------------------
         JsonObj.Add('supplyType', 'O');
         JsonObj.Add('subSupplyType', '1');
         JsonObj.Add('docType', 'INV');
-        JsonObj.Add('docNo', '12M3-872732389-5');
+        JsonObj.Add('docNo', NewDocNo);
         JsonObj.Add('docDate', '15/10/2025');
         JsonObj.Add('fromGstin', '05AAACG2115R1ZN');
         JsonObj.Add('fromTrdName', 'WELTON');
