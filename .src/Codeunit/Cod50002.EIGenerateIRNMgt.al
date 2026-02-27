@@ -33,10 +33,10 @@ codeunit 50002 "EI Generate IRN Mgt"
         Request.Content := Content;
         Content.ReadAs(ResponseText);
         Client.Send(Request, Response); */
-        JSONTest();
+        //JSONTest();
         RequestId := CreateGuid();
-        // RequestJson := BuildInvoiceJson(SalesInvHdr);
-        RequestJson := JsonText;
+        RequestJson := BuildInvoiceJson(SalesInvHdr);
+        //RequestJson := JsonText;
 
         if Setup."Show Message" then
             Message(RequestJson);
@@ -199,6 +199,8 @@ codeunit 50002 "EI Generate IRN Mgt"
 
     local procedure BuildInvoiceJson(SalesInvHdr: Record "Sales Invoice Header"): Text
     var
+        CompanyInfo: Record "Company Information";
+        States: Record State;
         Json: JsonObject;
         TranDtls: JsonObject;
         DocDtls: JsonObject;
@@ -219,8 +221,14 @@ codeunit 50002 "EI Generate IRN Mgt"
         EwbDtls: JsonObject;
         JsonText: Text;
         NullToken: JsonToken;
+        RandomNo: Integer;
+        NewDocNo: Text;
+        JVal: JsonValue;
     begin
+        CompanyInfo.Get();
         SalesInvHdr.CalcFields(Amount, "Amount Including VAT");
+        CalculateGSTAmounts(SalesInvHdr."No.", 0);
+
         // Version
         Json.Add('Version', '1.1');
 
@@ -228,44 +236,51 @@ codeunit 50002 "EI Generate IRN Mgt"
         TranDtls.Add('TaxSch', 'GST');
         TranDtls.Add('SupTyp', 'B2B');
         TranDtls.Add('RegRev', 'Y');
-        TranDtls.Add('EcmGstin', NullToken);
+        JVal.SetValueToNull();
+        TranDtls.Add('EcmGstin', JVal);
         TranDtls.Add('IgstOnIntra', 'N');
         Json.Add('TranDtls', TranDtls);
 
+        Randomize();
+        RandomNo := Random(900) + 100;
+
+        NewDocNo := SalesInvHdr."No." + '-' + Format(RandomNo);
         // Document Details
         DocDtls.Add('Typ', 'INV');
-        DocDtls.Add('No', SalesInvHdr."No.");
+        DocDtls.Add('No', NewDocNo);
         DocDtls.Add(
             'Dt',
             Format(SalesInvHdr."Posting Date", 0, '<Day,2>/<Month,2>/<Year4>')
         );
         Json.Add('DocDtls', DocDtls);
 
-        // Seller Details
-        SellerDtls.Add('Gstin', '02AMBPG7773M002'); //company info
-        SellerDtls.Add('LglNm', SalesInvHdr."Sell-to Customer Name");
-        SellerDtls.Add('TrdNm', CompanyName);
-        SellerDtls.Add('Addr1', SalesInvHdr."Sell-to Address");
-        SellerDtls.Add('Addr2', SalesInvHdr."Sell-to Address 2");
-        SellerDtls.Add('Loc', SalesInvHdr."Sell-to City");
-        SellerDtls.Add('Pin', 175032);
+        // Seller Details Company Info
+        SellerDtls.Add('Gstin', '02AMBPG7773M002');
+        SellerDtls.Add('LglNm', CompanyInfo."Name");
+        SellerDtls.Add('TrdNm', CompanyInfo."Name");
+        SellerDtls.Add('Addr1', CompanyInfo."Address");
+        SellerDtls.Add('Addr2', CompanyInfo."Address 2");
+        SellerDtls.Add('Loc', CompanyInfo."City");
+        SellerDtls.Add('Pin', '175032');
+        States.Get(CompanyInfo."State Code");
         SellerDtls.Add('Stcd', '02');
-        SellerDtls.Add('Ph', '9000000000');
-        SellerDtls.Add('Em', SalesInvHdr."Sell-to E-Mail");
+        SellerDtls.Add('Ph', CleanPhoneNo(CompanyInfo."Phone No."));
+        SellerDtls.Add('Em', CompanyInfo."E-Mail");
         Json.Add('SellerDtls', SellerDtls);
 
-        // Buyer Details  customer info
+        // Buyer Details  customer info bill 
         BuyerDtls.Add('Gstin', '36AAGCT1587Q1ZJ');
-        BuyerDtls.Add('LglNm', SalesInvHdr."Ship-to Name");
-        BuyerDtls.Add('TrdNm', CompanyName);
+        BuyerDtls.Add('LglNm', SalesInvHdr."Bill-to Name");
+        BuyerDtls.Add('TrdNm', SalesInvHdr."Bill-to Name");
         BuyerDtls.Add('Pos', '12');
-        BuyerDtls.Add('Addr1', SalesInvHdr."Ship-to Address");
-        BuyerDtls.Add('Addr2', SalesInvHdr."Ship-to Address 2");
-        BuyerDtls.Add('Loc', SalesInvHdr."Ship-to City");
-        BuyerDtls.Add('Pin', 500055);
+        BuyerDtls.Add('Addr1', SalesInvHdr."Bill-to Address");
+        BuyerDtls.Add('Addr2', 'kuvempu layout');
+        BuyerDtls.Add('Loc', SalesInvHdr."Bill-to City");
+        BuyerDtls.Add('Pin', '500055');
+        States.Get(SalesInvHdr."GST Bill-to State Code");
         BuyerDtls.Add('Stcd', '36');
-        BuyerDtls.Add('Ph', '91111111111');
-        BuyerDtls.Add('Em', 'xyz@yahoo.com');
+        BuyerDtls.Add('Ph', CleanPhoneNo(SalesInvHdr."Bill-to Contact No."));
+        BuyerDtls.Add('Em', SalesInvHdr."Sell-to E-Mail");
         Json.Add('BuyerDtls', BuyerDtls);
 
         // Item List
@@ -273,18 +288,19 @@ codeunit 50002 "EI Generate IRN Mgt"
         Json.Add('ItemList', ItemArray);
 
         // Value Details
-        ValDtls.Add('AssVal', SalesInvHdr."Amount");
-        ValDtls.Add('CgstVal', 0);
-        ValDtls.Add('SgstVal', 0);
-        ValDtls.Add('IgstVal', SalesInvHdr."Amount");
-        ValDtls.Add('CesVal', 508.94);
-        ValDtls.Add('StCesVal', 1202.46);
-        ValDtls.Add('Discount', 10);
-        ValDtls.Add('OthChrg', 20);
-        ValDtls.Add('RndOffAmt', 0.3);
-        ValDtls.Add('TotInvVal', SalesInvHdr."Amount Including VAT");
+        ValDtls.Add('AssVal', Abs(AssVal));
+        ValDtls.Add('CgstVal', Abs(CGSTAmt));
+        ValDtls.Add('SgstVal', Abs(SGSTAmt));
+        ValDtls.Add('IgstVal', Abs(IGSTAmt));
+        ValDtls.Add('CesVal', Abs(CessAmt));
+        ValDtls.Add('StCesVal', 0);
+        ValDtls.Add('Discount', 0);
+        ValDtls.Add('OthChrg', 0);
+        ValDtls.Add('RndOffAmt', 0);
+        ValDtls.Add('TotInvVal', Abs(AssVal) + Abs(CGSTAmt) + Abs(SGSTAmt) + Abs(IGSTAmt) + Abs(CessAmt));
         Json.Add('ValDtls', ValDtls);
 
+        //
         PayDtls.Add('Nm', 'ABCDE');
         PayDtls.Add('Accdet', '5697389713210');
         PayDtls.Add('Mode', 'Cash');
@@ -300,13 +316,13 @@ codeunit 50002 "EI Generate IRN Mgt"
 
         RefDtls.Add('InvRm', 'TEST');
         // DocPerdDtls
-        DocPerdDtls.Add('InvStDt', '01/08/2020');
-        DocPerdDtls.Add('InvEndDt', '01/09/2020');
+        DocPerdDtls.Add('InvStDt', Format(SalesInvHdr."Posting Date", 0, '<Day,2>/<Month,2>/<Year4>'));
+        DocPerdDtls.Add('InvEndDt', Format(SalesInvHdr."Posting Date", 0, '<Day,2>/<Month,2>/<Year4>'));
         RefDtls.Add('DocPerdDtls', DocPerdDtls);
 
         // PrecDocDtls (Array)
-        PrecDocObj.Add('InvNo', 'DOC/002');
-        PrecDocObj.Add('InvDt', '01/08/2020');
+        PrecDocObj.Add('InvNo', SalesInvHdr."No.");
+        PrecDocObj.Add('InvDt', Format(SalesInvHdr."Posting Date", 0, '<Day,2>/<Month,2>/<Year4>'));
         PrecDocObj.Add('OthRefNo', '123456');
         PrecDocArray.Add(PrecDocObj);
         RefDtls.Add('PrecDocDtls', PrecDocArray);
@@ -338,9 +354,6 @@ codeunit 50002 "EI Generate IRN Mgt"
         ExpDtls.Add('RefClm', 'N');
         ExpDtls.Add('ForCur', 'AED');
         ExpDtls.Add('CntCode', 'AE');
-
-
-
         // Add ExpDuty as JSON null by using an uninitialized JsonToken
         ExpDtls.Add('ExpDuty', NullToken);
 
@@ -378,10 +391,12 @@ codeunit 50002 "EI Generate IRN Mgt"
         if Line.FindSet() then
             repeat
                 Clear(ItemObj);
-                ItemObj.Add('SlNo', Format(Line."Line No."));
+                CalculateGSTAmounts(SalesInvHdr."No.", Line."Line No.");
+
+                ItemObj.Add('SlNo', Line."Document No.");
                 ItemObj.Add('PrdDesc', Line.Description);
                 ItemObj.Add('IsServc', 'N');
-                ItemObj.Add('HsnCd', '30049099');
+                ItemObj.Add('HsnCd', Line."HSN/SAC Code");
                 ItemObj.Add('Barcde', '123456');
                 ItemObj.Add('Qty', Line.Quantity);
                 ItemObj.Add('FreeQty', Line.Quantity);
@@ -389,20 +404,22 @@ codeunit 50002 "EI Generate IRN Mgt"
                 ItemObj.Add('UnitPrice', Line."Unit Price");
                 ItemObj.Add('TotAmt', Line."Line Amount");
                 ItemObj.Add('Discount', Line."Line Discount Amount");
-                ItemObj.Add('PreTaxVal', Line."Amount");
-                ItemObj.Add('AssAmt', Line.Amount);
-                ItemObj.Add('GstRt', Line."VAT %");
-                ItemObj.Add('IgstAmt', Line.Amount);
-                ItemObj.Add('CgstAmt', 0);
-                ItemObj.Add('SgstAmt', 0);
-                ItemObj.Add('CesRt', 0);
-                ItemObj.Add('CesAmt', 0);
+
+                ItemObj.Add('PreTaxVal', Abs(AssVal));
+                ItemObj.Add('AssAmt', Abs(AssVal));
+                ItemObj.Add('GstRt', CGSTRate + SGSTRate + IGSTRate);
+
+                ItemObj.Add('IgstAmt', Abs(IGSTAmt));
+                ItemObj.Add('CgstAmt', Abs(CGSTAmt));
+                ItemObj.Add('SgstAmt', Abs(SGSTAmt));
+                ItemObj.Add('CesRt', CessRate);
+                ItemObj.Add('CesAmt', Abs(CessAmt));
                 ItemObj.Add('CesNonAdvlAmt', 0);
                 ItemObj.Add('StateCesRt', 0);
                 ItemObj.Add('StateCesAmt', 0);
                 ItemObj.Add('StateCesNonAdvlAmt', 0);
                 ItemObj.Add('OthChrg', 0);
-                ItemObj.Add('TotItemVal', Line."Amount Including VAT");
+                ItemObj.Add('TotItemVal', Abs(AssVal) + Abs(CGSTAmt) + Abs(SGSTAmt) + Abs(IGSTAmt) + Abs(CessAmt));
                 ItemObj.Add('OrdLineRef', '3256');
                 ItemObj.Add('OrgCntry', 'IN');
                 ItemObj.Add('PrdSlNo', '12345');
@@ -450,6 +467,83 @@ codeunit 50002 "EI Generate IRN Mgt"
 
     var
         JsonText: Text;
+        AssVal: Decimal;
+        CGSTRate: Decimal;
+        SGSTRate: Decimal;
+        IGSTRate: Decimal;
+        CessRate: Decimal;
+        CGSTAmt: Decimal;
+        SGSTAmt: Decimal;
+        IGSTAmt: Decimal;
+        CessAmt: Decimal;
+        GSTComponentCode: Text;
+
+    local procedure CalculateGSTAmounts(DocNo: Code[20]; DocLineNo: Integer)
+    var
+        GSTDetailLedger: Record "Detailed GST Ledger Entry";
+    begin
+        Clear(AssVal);
+        Clear(CGSTRate);
+        Clear(SGSTRate);
+        Clear(IGSTRate);
+        Clear(CessRate);
+        Clear(CGSTAmt);
+        Clear(SGSTAmt);
+        Clear(IGSTAmt);
+        Clear(CessAmt);
+
+        GSTDetailLedger.Reset();
+        GSTDetailLedger.SetRange("Document No.", DocNo);
+
+        // 🔥 If line mode
+        if DocLineNo <> 0 then
+            GSTDetailLedger.SetRange("Document Line No.", DocLineNo);
+
+        if GSTDetailLedger.FindSet() then
+            repeat
+                AssVal += GSTDetailLedger."GST Base Amount";
+                GSTComponentCode := GSTDetailLedger."GST Component Code";
+                case GSTDetailLedger."GST Component Code" of
+
+                    'CGST':
+                        begin
+                            CGSTRate := GSTDetailLedger."GST %";
+                            CGSTAmt += GSTDetailLedger."GST Amount";
+                        end;
+
+                    'SGST':
+                        begin
+                            SGSTRate := GSTDetailLedger."GST %";
+                            SGSTAmt += GSTDetailLedger."GST Amount";
+                        end;
+
+                    'IGST':
+                        begin
+                            IGSTRate := GSTDetailLedger."GST %";
+                            IGSTAmt += GSTDetailLedger."GST Amount";
+                        end;
+
+                    'CESS':
+                        begin
+                            CessRate := GSTDetailLedger."GST %";
+                            CessAmt += GSTDetailLedger."GST Amount";
+                        end;
+                end;
+
+            until GSTDetailLedger.Next() = 0;
+    end;
+
+    local procedure CleanPhoneNo(Phone: Text): Text
+    var
+        Clean: Text;
+    begin
+        Clean := DelChr(Phone, '=', 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-+ ()');
+
+        if (StrLen(Clean) < 6) or (StrLen(Clean) > 12) then
+            exit('');
+
+        exit(Clean);
+    end;
 
     procedure JSONTest()
 
