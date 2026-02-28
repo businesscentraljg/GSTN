@@ -1,5 +1,8 @@
 namespace GSTN.GSTN;
 using Microsoft.Sales.History;
+using Microsoft.Finance.TaxBase;
+using Microsoft.Foundation.Company;
+using Microsoft.Finance.GST.Base;
 
 codeunit 50003 "Generate E-Way Bill Enriched"
 {
@@ -27,7 +30,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
 
         // JSONString();
         RequestId := CreateGuid();
-        RequestJson := BuildEWayJson(PostedInvoiceNo);
+        RequestJson := BuildEWayJson(SalesInvHdr);
 
         if Setup."Show Message" then
             Message(RequestJson);
@@ -108,8 +111,10 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         end;
     end;
 
-    procedure BuildEWayJson(SalesInvNo: Code[20]): Text
+    procedure BuildEWayJson(SalesInvHdr: Record "Sales Invoice Header"): Text
     var
+        CompanyInfo: Record "Company Information";
+        States: Record State;
         JsonObj: JsonObject;
         ItemArray: JsonArray;
         ItemObj: JsonObject;
@@ -118,10 +123,13 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         RandomNo: Integer;
         NewDocNo: Text;
     begin
+        SalesInvHdr.CalcFields(Amount, "Amount Including VAT");
+        CalculateGSTAmounts(SalesInvHdr."No.", 0);
+        CompanyInfo.Get();
         Randomize();
         RandomNo := Random(900) + 100; // Generates 100–999
 
-        NewDocNo := SalesInvNo + '-' + Format(RandomNo);
+        NewDocNo := SalesInvHdr."No." + '-' + Format(RandomNo);
         // -------------------------
         // Header Values
         // -------------------------
@@ -129,33 +137,35 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         JsonObj.Add('subSupplyType', '1');
         JsonObj.Add('docType', 'INV');
         JsonObj.Add('docNo', NewDocNo);
-        JsonObj.Add('docDate', '15/10/2025');
+        JsonObj.Add('docDate', Format(SalesInvHdr."Posting Date", 0, '<Day,2>/<Month,2>/<Year4>'));
         JsonObj.Add('fromGstin', '05AAACG2115R1ZN');
-        JsonObj.Add('fromTrdName', 'WELTON');
-        JsonObj.Add('fromAddr1', '2ND CROSS NO 59 19 A');
-        JsonObj.Add('fromAddr2', 'GROUND FLOOR OSBORNE ROAD');
-        JsonObj.Add('fromPlace', 'FRAZER TOWN');
-        JsonObj.Add('fromPincode', 560042);
+        JsonObj.Add('fromTrdName', CompanyInfo."Name");
+        JsonObj.Add('fromAddr1', CompanyInfo."Address");
+        JsonObj.Add('fromAddr2', CompanyInfo."Address 2");
+        JsonObj.Add('fromPlace', CompanyInfo."City");
+        JsonObj.Add('fromPincode', CompanyInfo."Post Code");
         JsonObj.Add('actFromStateCode', 29);
-        JsonObj.Add('fromStateCode', 29);
+        States.Get(CompanyInfo."State Code");
+        JsonObj.Add('fromStateCode', States."State Code (GST Reg. No.)");
 
         JsonObj.Add('toGstin', '05AAACG2140A1ZL');
-        JsonObj.Add('toTrdName', 'STHUTHYA');
-        JsonObj.Add('toAddr1', 'Shree Nilaya');
-        JsonObj.Add('toAddr2', 'Dasarahosahalli');
-        JsonObj.Add('toPlace', 'Beml Nagar');
-        JsonObj.Add('toPincode', 500003);
-        JsonObj.Add('actToStateCode', 36);
-        JsonObj.Add('toStateCode', 36);
+        JsonObj.Add('toTrdName', SalesInvHdr."Bill-to Name");
+        JsonObj.Add('toAddr1', SalesInvHdr."Bill-to Address");
+        JsonObj.Add('toAddr2', SalesInvHdr."Bill-to Address 2");
+        JsonObj.Add('toPlace', SalesInvHdr."Bill-to City");
+        JsonObj.Add('toPincode', SalesInvHdr."Bill-to Post Code");
+        States.Get(SalesInvHdr."GST Bill-to State Code");
+        JsonObj.Add('actToStateCode', States."State Code (GST Reg. No.)");
+        JsonObj.Add('toStateCode', States."State Code (GST Reg. No.)");
 
-        JsonObj.Add('totalValue', 5609889.00);
-        JsonObj.Add('cgstValue', 0.00);
-        JsonObj.Add('sgstValue', 0.00);
-        JsonObj.Add('igstValue', 168296.67);
-        JsonObj.Add('totInvValue', 5778185.67);
+        JsonObj.Add('totalValue', SalesInvHdr."Amount Including VAT");
+        JsonObj.Add('cgstValue', Abs(CGSTAmt));
+        JsonObj.Add('sgstValue', Abs(SGSTAmt));
+        JsonObj.Add('igstValue', Abs(IGSTAmt));
+        JsonObj.Add('totInvValue', Abs(AssVal) + Abs(CGSTAmt) + Abs(SGSTAmt) + Abs(IGSTAmt) + Abs(CessAmt));
 
-        JsonObj.Add('transMode', '1');
-        JsonObj.Add('transDistance', 570);
+        JsonObj.Add('transMode', SalesInvHdr."Transport Method");
+        JsonObj.Add('transDistance', SalesInvHdr."Distance (Km)");
         JsonObj.Add('transporterId', '');
         JsonObj.Add('transporterName', '');
         JsonObj.Add('transDocNo', '');
@@ -168,20 +178,20 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         // Item Loop
         // -------------------------
         SalesInvLine.Reset();
-        SalesInvLine.SetRange("Document No.", SalesInvNo);
+        SalesInvLine.SetRange("Document No.", SalesInvHdr."No.");
         if SalesInvLine.FindSet() then
             repeat
                 Clear(ItemObj);
-
-                ItemObj.Add('productName', 'Wheat');
-                ItemObj.Add('productDesc', 'Wheat');
-                ItemObj.Add('hsnCode', 100190);
-                ItemObj.Add('quantity', 4);
-                ItemObj.Add('qtyUnit', 'BOX');
-                ItemObj.Add('cgstRate', 0);
-                ItemObj.Add('sgstRate', 0);
-                ItemObj.Add('igstRate', 3);
-                ItemObj.Add('taxableAmount', 5609889.00);
+                CalculateGSTAmounts(SalesInvHdr."No.", SalesInvLine."Line No.");
+                ItemObj.Add('productName', SalesInvLine."Description");
+                ItemObj.Add('productDesc', SalesInvLine."Description");
+                ItemObj.Add('hsnCode', SalesInvLine."HSN/SAC Code");
+                ItemObj.Add('quantity', SalesInvLine.Quantity);
+                ItemObj.Add('qtyUnit', SalesInvLine."Unit of Measure");
+                ItemObj.Add('cgstRate', CGSTRate);
+                ItemObj.Add('sgstRate', SGSTRate);
+                ItemObj.Add('igstRate', IGSTRate);
+                ItemObj.Add('taxableAmount', AssVal);
                 ItemArray.Add(ItemObj);
 
             until SalesInvLine.Next() = 0;
@@ -192,4 +202,71 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         JsonObj.WriteTo(JsonText);
         exit(JsonText);
     end;
+
+    local procedure CalculateGSTAmounts(DocNo: Code[20]; DocLineNo: Integer)
+    var
+        GSTDetailLedger: Record "Detailed GST Ledger Entry";
+    begin
+        Clear(AssVal);
+        Clear(CGSTRate);
+        Clear(SGSTRate);
+        Clear(IGSTRate);
+        Clear(CessRate);
+        Clear(CGSTAmt);
+        Clear(SGSTAmt);
+        Clear(IGSTAmt);
+        Clear(CessAmt);
+
+        GSTDetailLedger.Reset();
+        GSTDetailLedger.SetRange("Document No.", DocNo);
+
+        // 🔥 If line mode
+        if DocLineNo <> 0 then
+            GSTDetailLedger.SetRange("Document Line No.", DocLineNo);
+
+        if GSTDetailLedger.FindSet() then
+            repeat
+                AssVal += GSTDetailLedger."GST Base Amount";
+                GSTComponentCode := GSTDetailLedger."GST Component Code";
+                case GSTDetailLedger."GST Component Code" of
+
+                    'CGST':
+                        begin
+                            CGSTRate := GSTDetailLedger."GST %";
+                            CGSTAmt += GSTDetailLedger."GST Amount";
+                        end;
+
+                    'SGST':
+                        begin
+                            SGSTRate := GSTDetailLedger."GST %";
+                            SGSTAmt += GSTDetailLedger."GST Amount";
+                        end;
+
+                    'IGST':
+                        begin
+                            IGSTRate := GSTDetailLedger."GST %";
+                            IGSTAmt += GSTDetailLedger."GST Amount";
+                        end;
+
+                    'CESS':
+                        begin
+                            CessRate := GSTDetailLedger."GST %";
+                            CessAmt += GSTDetailLedger."GST Amount";
+                        end;
+                end;
+
+            until GSTDetailLedger.Next() = 0;
+    end;
+
+    var
+        AssVal: Decimal;
+        CGSTRate: Decimal;
+        SGSTRate: Decimal;
+        IGSTRate: Decimal;
+        CessRate: Decimal;
+        CGSTAmt: Decimal;
+        SGSTAmt: Decimal;
+        IGSTAmt: Decimal;
+        CessAmt: Decimal;
+        GSTComponentCode: Text;
 }

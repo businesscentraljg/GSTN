@@ -405,8 +405,8 @@ codeunit 50002 "EI Generate IRN Mgt"
                 ItemObj.Add('TotAmt', Line."Line Amount");
                 ItemObj.Add('Discount', Line."Line Discount Amount");
 
-                ItemObj.Add('PreTaxVal', Abs(AssVal));
-                ItemObj.Add('AssAmt', Abs(AssVal));
+                ItemObj.Add('PreTaxVal', Line."Line Amount" - Line."Line Discount Amount");
+                ItemObj.Add('AssAmt', Line."Line Amount" - Line."Line Discount Amount");
                 ItemObj.Add('GstRt', CGSTRate + SGSTRate + IGSTRate);
 
                 ItemObj.Add('IgstAmt', Abs(IGSTAmt));
