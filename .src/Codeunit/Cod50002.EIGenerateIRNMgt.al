@@ -255,30 +255,30 @@ codeunit 50002 "EI Generate IRN Mgt"
         Json.Add('DocDtls', DocDtls);
 
         // Seller Details Company Info
-        SellerDtls.Add('Gstin', '02AMBPG7773M002');
+        SellerDtls.Add('Gstin', CompanyInfo."GST Registration No.");
         SellerDtls.Add('LglNm', CompanyInfo."Name");
         SellerDtls.Add('TrdNm', CompanyInfo."Name");
         SellerDtls.Add('Addr1', CompanyInfo."Address");
         SellerDtls.Add('Addr2', CompanyInfo."Address 2");
         SellerDtls.Add('Loc', CompanyInfo."City");
-        SellerDtls.Add('Pin', '175032');
+        SellerDtls.Add('Pin', CompanyInfo."Post Code");
         States.Get(CompanyInfo."State Code");
-        SellerDtls.Add('Stcd', '02');
+        SellerDtls.Add('Stcd', States."State Code (GST Reg. No.)");
         SellerDtls.Add('Ph', CleanPhoneNo(CompanyInfo."Phone No."));
         SellerDtls.Add('Em', CompanyInfo."E-Mail");
         Json.Add('SellerDtls', SellerDtls);
 
         // Buyer Details  customer info bill 
-        BuyerDtls.Add('Gstin', '36AAGCT1587Q1ZJ');
+        BuyerDtls.Add('Gstin', SalesInvHdr."Customer GST Reg. No.");
         BuyerDtls.Add('LglNm', SalesInvHdr."Bill-to Name");
         BuyerDtls.Add('TrdNm', SalesInvHdr."Bill-to Name");
         BuyerDtls.Add('Pos', '12');
         BuyerDtls.Add('Addr1', SalesInvHdr."Bill-to Address");
-        BuyerDtls.Add('Addr2', 'kuvempu layout');
+        BuyerDtls.Add('Addr2', SalesInvHdr."Bill-to Address 2");
         BuyerDtls.Add('Loc', SalesInvHdr."Bill-to City");
-        BuyerDtls.Add('Pin', '500055');
+        BuyerDtls.Add('Pin', SalesInvHdr."Bill-to Post Code");
         States.Get(SalesInvHdr."GST Bill-to State Code");
-        BuyerDtls.Add('Stcd', '36');
+        BuyerDtls.Add('Stcd', States."State Code (GST Reg. No.)");
         BuyerDtls.Add('Ph', CleanPhoneNo(SalesInvHdr."Bill-to Contact No."));
         BuyerDtls.Add('Em', SalesInvHdr."Sell-to E-Mail");
         Json.Add('BuyerDtls', BuyerDtls);
