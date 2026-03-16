@@ -11,7 +11,7 @@
       <am:Name>MSRB</am:Name>
       <am:Version>15.1.30001.02</am:Version>
     </am:UpdatedBy>
-    <am:LastModifiedTimestamp>2026-03-16T15:22:54.5534944Z</am:LastModifiedTimestamp>
+    <am:LastModifiedTimestamp>2026-03-16T15:35:13.3325270Z</am:LastModifiedTimestamp>
   </am:AuthoringMetadata>
   <AutoRefresh>0</AutoRefresh>
   <DataSources>
@@ -305,7 +305,7 @@
                                 <Paragraph>
                                   <TextRuns>
                                     <TextRun>
-                                      <Value>SO No. </Value>
+                                      <Value>SI No. </Value>
                                       <Style>
                                         <FontSize>8pt</FontSize>
                                         <FontWeight>Bold</FontWeight>
@@ -6051,7 +6051,7 @@
                           </Style>
                         </TextRun>
                         <TextRun>
-                          <Value>="SALES ORDER"</Value>
+                          <Value>="SALES INVOICE</Value>
                           <Style>
                             <FontSize>14pt</FontSize>
                             <FontWeight>Bold</FontWeight>
