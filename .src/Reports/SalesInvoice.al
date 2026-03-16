@@ -280,7 +280,7 @@ report 50003 "Sales Invoice"
             column(TOTAL; TOTAL)
             {
             }
-            dataitem("Purchase Line1"; "Sales Line")
+            dataitem("Purchase Line1"; "Sales Invoice Line")
             {
                 DataItemLink = "Document No." = FIELD("No.");
                 /*  column(AmountToVendor_PurchaseLine; "Purchase Line1"."Amount To Vendor")
@@ -360,7 +360,7 @@ report 50003 "Sales Invoice"
                 column(VendorItemNo_PurchaseLine; "Purchase Line1"."No.")
                 {
                 }
-                column(ExpectedReceiptDate_PurchaseLine; "Purchase Line1"."Promised Delivery Date")
+                column(ExpectedReceiptDate_PurchaseLine; "Purchase Line1"."Shipment Date")
                 {
                 }
                 column(Remarks; Comment_Remarks)
@@ -437,7 +437,7 @@ report 50003 "Sales Invoice"
                     //GrandTot+=ROUND(AmtToVendor+TOTALAMT,1,'=');
                     GrandTot += ROUND(AmtToVendor + TOTALAMT);
                     RecCheck.InitTextVariable;
-                    RecCheck.FormatNoText(NumberText, GrandTot, "Purchase Line1"."Currency Code");
+                    RecCheck.FormatNoText(NumberText, GrandTot, "Sales Invoice Header"."Currency Code");
 
 
 
@@ -801,13 +801,13 @@ report 50003 "Sales Invoice"
         RsVendor: Record Customer;
         InvoiceRoundingAcc: Code[20];
         RoundOff: Decimal;
-        RecPurchaseLine: Record "Sales Line";
+        RecPurchaseLine: Record "Sales Invoice Line";
         PayTerm: Text;
         TOTALAMT: Decimal;
         TotAmt: Decimal;
         RecLocation: Record Location;
         RsVendorPosting: Record "Customer Posting Group";
-        PurchaseLineTmp: Record "Sales Line";
+        PurchaseLineTmp: Record "Sales Invoice Line";
         Charge: Decimal;
         Charge1: Decimal;
         // RecStructOrderLine: Record "13795";
@@ -851,7 +851,7 @@ report 50003 "Sales Invoice"
         TotalVal: Decimal;
         CheckG: Report Check;
         TotalInvAmtinWords: array[2] of Text;
-        purchline: Record "Sales Line";
+        purchline: Record "Sales Invoice Line";
         TotalVal1: Decimal;
         //   strordrline: Record "13795";
         Appr_name: Text;
