@@ -280,6 +280,9 @@ report 50003 "Sales Invoice"
             column(TOTAL; TOTAL)
             {
             }
+            column(QRCodeImage; "Sales Invoice Header"."QR Code Img")
+            {
+            }
             dataitem("Purchase Line1"; "Sales Invoice Line")
             {
                 DataItemLink = "Document No." = FIELD("No.");

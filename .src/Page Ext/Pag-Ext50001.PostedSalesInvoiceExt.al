@@ -1,5 +1,17 @@
 pageextension 50001 "Posted Sales Invoice Ext1" extends "Posted Sales Invoice"
 {
+    layout
+    {
+        addlast(FactBoxes)
+        {
+            part(QRFactBox; "Sales Inv QR FactBox")
+            {
+                Caption = 'IRN QR Code';
+                ApplicationArea = All;
+                SubPageLink = "No." = field("No.");
+            }
+        }
+    }
     actions
     {
         addlast(Processing)

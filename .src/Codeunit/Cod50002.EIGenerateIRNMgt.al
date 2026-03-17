@@ -88,28 +88,26 @@ codeunit 50002 "EI Generate IRN Mgt"
         Staging."HTTP Status Code" := Response.HttpStatusCode();
         Staging."Error Text" := Response.ReasonPhrase();
         // Parse Response
-        ParseIRNResponse(ResponseText, Staging);
+        ParseIRNResponse(ResponseText, Staging, SalesInvHdr);
 
         // Insert staging
         Staging.Modify();
 
-        if Staging.Success then begin
-            SalesInvHdr."IRN Hash" := Staging."IRN";
-            SalesInvHdr."Acknowledgement No." := Staging."Ack No.";
-            // SalesInvHdr."Acknowledgement Date" := Staging."Ack Date";
-            SalesInvHdr."E-Way Bill No." := Staging."EWB No.";
-            SalesInvHdr."QR Code" := Staging."Signed QR Code";
-            SalesInvHdr.Modify();
-        end;
     end;
 
-    local procedure ParseIRNResponse(ResponseText: Text; var Staging: Record "E-Invoice IRN Staging")
+    local procedure ParseIRNResponse(ResponseText: Text; var Staging: Record "E-Invoice IRN Staging"; var SalesInvHdr: Record "Sales Invoice Header")
     var
         Root: JsonObject;
         Result: JsonObject;
         Token: JsonToken;
         JA: JsonArray;
         JO: JsonObject;
+        BarcodeSymbology2D: Enum "Barcode Symbology 2D";
+        BarcodeImageProvider2D: Interface "Barcode Image Provider 2D";
+        TempBlob: Codeunit "Temp Blob";
+        OS: OutStream;
+        IS: InStream;
+        QRText: Text;
     begin
         Root.ReadFrom(ResponseText);
 
@@ -125,11 +123,15 @@ codeunit 50002 "EI Generate IRN Mgt"
         if Root.Get('result', Token) then begin
             Result := Token.AsObject();
 
-            if Result.Get('Irn', Token) then
+            if Result.Get('Irn', Token) then begin
                 Staging."IRN" := Token.AsValue().AsText();
+                SalesInvHdr."IRN Hash" := Staging."IRN";
+            end;
 
-            if Result.Get('AckNo', Token) then
+            if Result.Get('AckNo', Token) then begin
                 Staging."Ack No." := Token.AsValue().AsText();
+                SalesInvHdr."Acknowledgement No." := Staging."Ack No.";
+            end;
 
             if Result.Get('AckDt', Token) then
                 Staging."Ack Date" := Token.AsValue().AsText();
@@ -137,14 +139,29 @@ codeunit 50002 "EI Generate IRN Mgt"
             if Result.Get('SignedInvoice', Token) then
                 SaveTextToBlob(Token.AsValue().AsText(), Staging, 'Signed Invoice');
 
-            if Result.Get('SignedQRCode', Token) then
+            if Result.Get('SignedQRCode', Token) then begin
                 SaveTextToBlob(Token.AsValue().AsText(), Staging, 'Signed QR Code');
+                QRText := Token.AsValue().AsText();
+
+                TempBlob.CreateOutStream(OS);
+
+                BarcodeImageProvider2D := Enum::"Barcode Image Provider 2D"::Dynamics2D;
+                BarcodeSymbology2D := Enum::"Barcode Symbology 2D"::"QR-Code";
+                if QRText <> '' then
+                    TempBlob := BarcodeImageProvider2D.EncodeImage(QRText, BarcodeSymbology2D);
+
+                TempBlob.CreateOutStream(OS);
+                TempBlob.CreateInStream(IS);
+                SalesInvHdr."QR Code Img".ImportStream(IS, Format(SalesInvHdr."No."), '');
+            end;
 
             if Result.Get('Status', Token) then
                 Staging."IRN Status" := Token.AsValue().AsText();
 
-            if Result.Get('EwbNo', Token) then
+            if Result.Get('EwbNo', Token) then begin
                 Staging."EWB No." := Token.AsValue().AsText();
+                SalesInvHdr."E-Way Bill No." := Staging."EWB No.";
+            end;
 
             if Result.Get('EwbDt', Token) then
                 Staging."EWB Date" := Token.AsValue().AsText();
@@ -176,6 +193,7 @@ codeunit 50002 "EI Generate IRN Mgt"
                 end;
             end;
         end;
+        SalesInvHdr.Modify();
     end;
 
     local procedure SaveTextToBlob(TextValue: Text; var Staging: Record "E-Invoice IRN Staging"; FieldName: Text)
