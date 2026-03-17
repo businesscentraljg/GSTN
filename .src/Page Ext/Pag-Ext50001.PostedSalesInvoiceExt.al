@@ -4,7 +4,7 @@ pageextension 50001 "Posted Sales Invoice Ext1" extends "Posted Sales Invoice"
     {
         addlast(FactBoxes)
         {
-            part(QRFactBox; "Sales Inv QR FactBox")
+            part(QRFactBox; "Sales Invoice IRN QR FactBox")
             {
                 Caption = 'IRN QR Code';
                 ApplicationArea = All;
