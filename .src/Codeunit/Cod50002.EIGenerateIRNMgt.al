@@ -1,5 +1,6 @@
 codeunit 50002 "EI Generate IRN Mgt"
 {
+    Permissions = tabledata "Sales Invoice Header" = rim;
     procedure GenerateIRN(PostedInvoiceNo: Code[20])
     var
         SalesInvHdr: Record "Sales Invoice Header";
@@ -93,10 +94,12 @@ codeunit 50002 "EI Generate IRN Mgt"
         Staging.Modify();
 
         if Staging.Success then begin
-            // SalesInvHdr."IRN Hash" := Staging."IRN";
-            // SalesInvHdr."IRN Ack No." := Format(Staging."Ack No.");
-            // SalesInvHdr."IRN Ack Date" := DT2Date(Staging."Ack Date");
-            // SalesInvHdr.Modify(true);
+            SalesInvHdr."IRN Hash" := Staging."IRN";
+            SalesInvHdr."Acknowledgement No." := Staging."Ack No.";
+            // SalesInvHdr."Acknowledgement Date" := Staging."Ack Date";
+            SalesInvHdr."E-Way Bill No." := Staging."EWB No.";
+            SalesInvHdr."QR Code" := Staging."Signed QR Code";
+            SalesInvHdr.Modify();
         end;
     end;
 
@@ -126,7 +129,7 @@ codeunit 50002 "EI Generate IRN Mgt"
                 Staging."IRN" := Token.AsValue().AsText();
 
             if Result.Get('AckNo', Token) then
-                Staging."Ack No." := Token.AsValue().AsBigInteger();
+                Staging."Ack No." := Token.AsValue().AsText();
 
             if Result.Get('AckDt', Token) then
                 Staging."Ack Date" := Token.AsValue().AsText();
@@ -141,7 +144,7 @@ codeunit 50002 "EI Generate IRN Mgt"
                 Staging."IRN Status" := Token.AsValue().AsText();
 
             if Result.Get('EwbNo', Token) then
-                Staging."EWB No." := Token.AsValue().AsBigInteger();
+                Staging."EWB No." := Token.AsValue().AsText();
 
             if Result.Get('EwbDt', Token) then
                 Staging."EWB Date" := Token.AsValue().AsText();

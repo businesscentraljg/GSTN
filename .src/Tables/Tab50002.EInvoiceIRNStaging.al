@@ -24,9 +24,9 @@ table 50002 "E-Invoice IRN Staging"
 
         // IRN DETAILS
         field(10; "IRN"; Text[100]) { }
-        field(11; "Ack No."; BigInteger) { }
+        field(11; "Ack No."; Text[30]) { }
         field(12; "Ack Date"; Text[100]) { }
-        field(13; "EWB No."; BigInteger) { }
+        field(13; "EWB No."; Text[50]) { }
         field(14; "EWB Valid Till"; Text[100]) { }
 
         // STATUS
