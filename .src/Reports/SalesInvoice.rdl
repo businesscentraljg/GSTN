@@ -11,7 +11,7 @@
       <am:Name>MSRB</am:Name>
       <am:Version>15.1.30001.02</am:Version>
     </am:UpdatedBy>
-    <am:LastModifiedTimestamp>2026-03-17T17:34:19.3402421Z</am:LastModifiedTimestamp>
+    <am:LastModifiedTimestamp>2026-03-17T17:56:31.3890499Z</am:LastModifiedTimestamp>
   </am:AuthoringMetadata>
   <AutoRefresh>0</AutoRefresh>
   <DataSources>
@@ -6492,7 +6492,7 @@
                         <TextRun>
                           <Value>="SALES INVOICE"</Value>
                           <Style>
-                            <FontSize>14pt</FontSize>
+                            <FontSize>12pt</FontSize>
                             <FontWeight>Bold</FontWeight>
                           </Style>
                         </TextRun>
@@ -6502,9 +6502,9 @@
                       </Style>
                     </Paragraph>
                   </Paragraphs>
-                  <Top>1.33086in</Top>
+                  <Top>1.26142in</Top>
                   <Left>1.47878in</Left>
-                  <Height>0.3414in</Height>
+                  <Height>0.41084in</Height>
                   <Width>3.86171in</Width>
                   <ZIndex>1</ZIndex>
                   <Style>
@@ -6628,7 +6628,7 @@
                       <Style />
                     </Paragraph>
                   </Paragraphs>
-                  <Top>0.51309in</Top>
+                  <Top>0.47434in</Top>
                   <Left>7.46005cm</Left>
                   <Height>0.19042in</Height>
                   <Width>4.60629in</Width>
@@ -6699,8 +6699,8 @@
                       <Style />
                     </Paragraph>
                   </Paragraphs>
-                  <Top>0.92573in</Top>
-                  <Left>7.46005cm</Left>
+                  <Top>0.83142in</Top>
+                  <Left>7.46008cm</Left>
                   <Height>0.23848in</Height>
                   <Width>4.61933in</Width>
                   <ZIndex>5</ZIndex>
@@ -6750,7 +6750,7 @@
                       <Style />
                     </Paragraph>
                   </Paragraphs>
-                  <Top>0.7174in</Top>
+                  <Top>0.66476in</Top>
                   <Left>7.46005cm</Left>
                   <Height>0.16666in</Height>
                   <Width>4.59586in</Width>
@@ -6782,7 +6782,7 @@
                       <Style />
                     </Paragraph>
                   </Paragraphs>
-                  <Top>0.31864in</Top>
+                  <Top>0.2492in</Top>
                   <Left>7.46005cm</Left>
                   <Height>0.22514in</Height>
                   <Width>1.53049in</Width>
@@ -6853,7 +6853,7 @@
               <Top>0.0148in</Top>
               <Left>0.08376in</Left>
               <Height>1.67227in</Height>
-              <Width>7.55636in</Width>
+              <Width>7.55637in</Width>
               <Style>
                 <Border>
                   <Style>Solid</Style>
