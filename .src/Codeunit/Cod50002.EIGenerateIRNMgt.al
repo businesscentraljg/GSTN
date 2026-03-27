@@ -256,9 +256,9 @@ codeunit 50002 "EI Generate IRN Mgt"
         // Transaction Details
         TranDtls.Add('TaxSch', 'GST');
         TranDtls.Add('SupTyp', 'B2B');
-        TranDtls.Add('RegRev', 'Y');
+        TranDtls.Add('RegRev', 'N');
         JVal.SetValueToNull();
-        TranDtls.Add('EcmGstin', JVal);
+        //TranDtls.Add('EcmGstin', JVal);
         TranDtls.Add('IgstOnIntra', 'N');
         Json.Add('TranDtls', TranDtls);
 
@@ -290,15 +290,15 @@ codeunit 50002 "EI Generate IRN Mgt"
         Json.Add('SellerDtls', SellerDtls);
 
         // Buyer Details  customer info bill 
+        States.Get(SalesInvHdr."GST Bill-to State Code");
         BuyerDtls.Add('Gstin', SalesInvHdr."Customer GST Reg. No.");
         BuyerDtls.Add('LglNm', SalesInvHdr."Bill-to Name");
         BuyerDtls.Add('TrdNm', SalesInvHdr."Bill-to Name");
-        BuyerDtls.Add('Pos', '12');
+        BuyerDtls.Add('Pos', States."State Code (GST Reg. No.)");
         BuyerDtls.Add('Addr1', SalesInvHdr."Bill-to Address");
         BuyerDtls.Add('Addr2', SalesInvHdr."Bill-to Address 2");
         BuyerDtls.Add('Loc', SalesInvHdr."Bill-to City");
         BuyerDtls.Add('Pin', SalesInvHdr."Bill-to Post Code");
-        States.Get(SalesInvHdr."GST Bill-to State Code");
         BuyerDtls.Add('Stcd', States."State Code (GST Reg. No.)");
         BuyerDtls.Add('Ph', CleanPhoneNo(SalesInvHdr."Bill-to Contact No."));
         BuyerDtls.Add('Em', SalesInvHdr."Sell-to E-Mail");
