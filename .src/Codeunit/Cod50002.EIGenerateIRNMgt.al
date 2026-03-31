@@ -6,6 +6,7 @@ codeunit 50002 "EI Generate IRN Mgt"
         SalesInvHdr: Record "Sales Invoice Header";
         Setup: Record "GSP Authentication Setup";
         Staging: Record "E-Invoice IRN Staging";
+        CompanyInfo: Record "Company Information";
         GSPMgmt: Codeunit "GSP Management";
         Client: HttpClient;
         Request: HttpRequestMessage;
@@ -19,6 +20,7 @@ codeunit 50002 "EI Generate IRN Mgt"
         JsonResp: JsonArray;
     begin
         Setup.Get();
+        CompanyInfo.Get();
         SalesInvHdr.Get(PostedInvoiceNo);
 
         // if SalesInvHdr."IRN Hash" <> '' then
@@ -55,9 +57,9 @@ codeunit 50002 "EI Generate IRN Mgt"
 
         // 🔥 ADAEQUARE REQUIRED HEADERS
         Headers.Add('Authorization', 'Bearer ' + GSPMgmt.GetValidAccessToken());
-        Headers.Add('user_name', 'adqgsphpusr1');
-        Headers.Add('password', 'Gsp@1234');
-        Headers.Add('gstin', '02AMBPG7773M002');
+        Headers.Add('user_name', 'adqgspusr1');
+        Headers.Add('password', 'GspRoot@1234');
+        Headers.Add('gstin', CompanyInfo."GST Registration No.");
         Headers.Add('requestid', RequestId);
 
         // -------------------------------
@@ -82,7 +84,7 @@ codeunit 50002 "EI Generate IRN Mgt"
         Staging."Posting Date" := SalesInvHdr."Posting Date";
         Staging."Request DateTime" := CurrentDateTime();
         Staging."Request Id" := RequestId;
-        Staging."GSTIN Used" := '02AMBPG7773M002';
+        Staging."GSTIN Used" := CompanyInfo."GST Registration No.";
         SaveTextToBlob(RequestJson, Staging, 'Request JSON');
         SaveTextToBlob(ResponseText, Staging, 'Response JSON');
         Staging."HTTP Status Code" := Response.HttpStatusCode();
@@ -249,7 +251,7 @@ codeunit 50002 "EI Generate IRN Mgt"
         CompanyInfo.Get();
         SalesInvHdr.CalcFields(Amount, "Amount Including VAT");
         CalculateGSTAmounts(SalesInvHdr."No.", 0);
-
+        CalculateAssVal(SalesInvHdr);
         // Version
         Json.Add('Version', '1.1');
 
@@ -278,30 +280,30 @@ codeunit 50002 "EI Generate IRN Mgt"
         // Seller Details Company Info
         SellerDtls.Add('Gstin', CompanyInfo."GST Registration No.");
         SellerDtls.Add('LglNm', CompanyInfo."Name");
-        SellerDtls.Add('TrdNm', CompanyInfo."Name");
+        //SellerDtls.Add('TrdNm', CompanyInfo."Name");
         SellerDtls.Add('Addr1', CompanyInfo."Address");
         SellerDtls.Add('Addr2', CompanyInfo."Address 2");
         SellerDtls.Add('Loc', CompanyInfo."City");
         SellerDtls.Add('Pin', CompanyInfo."Post Code");
         States.Get(CompanyInfo."State Code");
         SellerDtls.Add('Stcd', States."State Code (GST Reg. No.)");
-        SellerDtls.Add('Ph', CleanPhoneNo(CompanyInfo."Phone No."));
-        SellerDtls.Add('Em', CompanyInfo."E-Mail");
+        // SellerDtls.Add('Ph', CleanPhoneNo(CompanyInfo."Phone No."));
+        //SellerDtls.Add('Em', CompanyInfo."E-Mail");
         Json.Add('SellerDtls', SellerDtls);
 
         // Buyer Details  customer info bill 
         States.Get(SalesInvHdr."GST Bill-to State Code");
         BuyerDtls.Add('Gstin', SalesInvHdr."Customer GST Reg. No.");
         BuyerDtls.Add('LglNm', SalesInvHdr."Bill-to Name");
-        BuyerDtls.Add('TrdNm', SalesInvHdr."Bill-to Name");
+        // BuyerDtls.Add('TrdNm', SalesInvHdr."Bill-to Name");
         BuyerDtls.Add('Pos', States."State Code (GST Reg. No.)");
         BuyerDtls.Add('Addr1', SalesInvHdr."Bill-to Address");
         BuyerDtls.Add('Addr2', SalesInvHdr."Bill-to Address 2");
         BuyerDtls.Add('Loc', SalesInvHdr."Bill-to City");
         BuyerDtls.Add('Pin', SalesInvHdr."Bill-to Post Code");
         BuyerDtls.Add('Stcd', States."State Code (GST Reg. No.)");
-        BuyerDtls.Add('Ph', CleanPhoneNo(SalesInvHdr."Bill-to Contact No."));
-        BuyerDtls.Add('Em', SalesInvHdr."Sell-to E-Mail");
+        //BuyerDtls.Add('Ph', CleanPhoneNo(SalesInvHdr."Bill-to Contact No."));
+        //BuyerDtls.Add('Em', SalesInvHdr."Sell-to E-Mail");
         Json.Add('BuyerDtls', BuyerDtls);
 
         // Item List
@@ -418,7 +420,7 @@ codeunit 50002 "EI Generate IRN Mgt"
                 ItemObj.Add('PrdDesc', Line.Description);
                 ItemObj.Add('IsServc', 'N');
                 ItemObj.Add('HsnCd', Line."HSN/SAC Code");
-                ItemObj.Add('Barcde', '123456');
+                //ItemObj.Add('Barcde', '123456');
                 ItemObj.Add('Qty', Line.Quantity);
                 ItemObj.Add('FreeQty', Line.Quantity);
                 ItemObj.Add('Unit', Line."Unit of Measure Code");
@@ -426,7 +428,7 @@ codeunit 50002 "EI Generate IRN Mgt"
                 ItemObj.Add('TotAmt', Line."Line Amount");
                 ItemObj.Add('Discount', Line."Line Discount Amount");
 
-                ItemObj.Add('PreTaxVal', Line."Line Amount" - Line."Line Discount Amount");
+                ItemObj.Add('PreTaxVal', 0);
                 ItemObj.Add('AssAmt', Line."Line Amount" - Line."Line Discount Amount");
                 ItemObj.Add('GstRt', CGSTRate + SGSTRate + IGSTRate);
 
@@ -440,7 +442,7 @@ codeunit 50002 "EI Generate IRN Mgt"
                 ItemObj.Add('StateCesAmt', 0);
                 ItemObj.Add('StateCesNonAdvlAmt', 0);
                 ItemObj.Add('OthChrg', 0);
-                ItemObj.Add('TotItemVal', Abs(AssVal) + Abs(CGSTAmt) + Abs(SGSTAmt) + Abs(IGSTAmt) + Abs(CessAmt));
+                ItemObj.Add('TotItemVal', Abs(Line."Line Amount" - Line."Line Discount Amount") + Abs(CGSTAmt) + Abs(SGSTAmt) + Abs(IGSTAmt) + Abs(CessAmt));
                 ItemObj.Add('OrdLineRef', '3256');
                 ItemObj.Add('OrgCntry', 'IN');
                 ItemObj.Add('PrdSlNo', '12345');
@@ -503,7 +505,7 @@ codeunit 50002 "EI Generate IRN Mgt"
     var
         GSTDetailLedger: Record "Detailed GST Ledger Entry";
     begin
-        Clear(AssVal);
+        // Clear(AssVal);
         Clear(CGSTRate);
         Clear(SGSTRate);
         Clear(IGSTRate);
@@ -522,7 +524,7 @@ codeunit 50002 "EI Generate IRN Mgt"
 
         if GSTDetailLedger.FindSet() then
             repeat
-                AssVal += GSTDetailLedger."GST Base Amount";
+                //AssVal += GSTDetailLedger."GST Base Amount";
                 GSTComponentCode := GSTDetailLedger."GST Component Code";
                 case GSTDetailLedger."GST Component Code" of
 
@@ -564,6 +566,20 @@ codeunit 50002 "EI Generate IRN Mgt"
             exit('');
 
         exit(Clean);
+    end;
+
+    local procedure CalculateAssVal(SalesInvHdr: Record "Sales Invoice Header")
+    var
+        Line: Record "Sales Invoice Line";
+    begin
+        Clear(AssVal);
+
+        Line.Reset();
+        Line.SetRange("Document No.", SalesInvHdr."No.");
+        if Line.FindSet() then
+            repeat
+                AssVal += Abs(Line."Line Amount" - Line."Line Discount Amount");
+            until Line.Next() = 0;
     end;
 
     procedure JSONTest()
