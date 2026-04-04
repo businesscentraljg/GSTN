@@ -212,11 +212,20 @@ codeunit 50001 "Vendor GSTN Search Management"
     // ===================================
     local procedure UpdateVendorFromGSTN(var Vend: Record Vendor; Staging: Record "GSTN Search Staging")
     begin
-        Vend.Address := Staging."Pr. Door No." + ' ' + Staging."Pr. Street";
-        Vend."Address 2" := Staging."Pr. Building Name";
-        Vend.Validate(City, Staging."Pr. Location");
-        Vend.County := Staging."Pr. District";
-        Vend.Validate("Post Code", Staging."Pr. Pincode");
+        if Vend.Address = '' then
+            Vend.Address := Staging."Pr. Door No." + ' ' + Staging."Pr. Street";
+
+        if Vend."Address 2" = '' then
+            Vend."Address 2" := Staging."Pr. Building Name";
+
+        if Vend.City = '' then
+            Vend.Validate(City, Staging."Pr. Location");
+
+        if Vend.County = '' then
+            Vend.County := Staging."Pr. District";
+
+        if Vend."Post Code" = '' then
+            Vend.Validate("Post Code", Staging."Pr. Pincode");
 
         Vend.Modify(true);
     end;

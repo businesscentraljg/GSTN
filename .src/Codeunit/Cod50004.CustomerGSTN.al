@@ -215,11 +215,20 @@ codeunit 50004 "Customer GSTN"
     // ===================================
     local procedure UpdateCustomerFromGSTN(var Cust: Record Customer; Staging: Record "GSTN Search Staging")
     begin
-        Cust.Address := Staging."Pr. Door No." + ' ' + Staging."Pr. Street";
-        Cust."Address 2" := Staging."Pr. Building Name";
-        Cust.Validate(City, Staging."Pr. Location");
-        Cust.County := Staging."Pr. District";
-        Cust.Validate("Post Code", Staging."Pr. Pincode");
+        if Cust.Address = '' then
+            Cust.Address := Staging."Pr. Door No." + ' ' + Staging."Pr. Street";
+
+        if Cust."Address 2" = '' then
+            Cust."Address 2" := Staging."Pr. Building Name";
+
+        if Cust.City = '' then
+            Cust.Validate(City, Staging."Pr. Location");
+
+        if Cust.County = '' then
+            Cust.County := Staging."Pr. District";
+
+        if Cust."Post Code" = '' then
+            Cust.Validate("Post Code", Staging."Pr. Pincode");
 
         Cust.Modify(true);
     end;
