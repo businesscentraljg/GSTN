@@ -255,7 +255,7 @@ codeunit 50002 "EI Generate IRN Mgt"
     begin
         CompanyInfo.Get();
         SalesInvHdr.CalcFields(Amount, "Amount Including VAT");
-        CalculateGSTAmounts(SalesInvHdr."No.", 0);
+        CalculateGSTHeader(SalesInvHdr."No.");
         CalculateAssVal(SalesInvHdr);
         // Version
         Json.Add('Version', '1.1');
@@ -317,15 +317,15 @@ codeunit 50002 "EI Generate IRN Mgt"
 
         // Value Details
         ValDtls.Add('AssVal', Abs(AssVal));
-        ValDtls.Add('CgstVal', Abs(CGSTAmt));
-        ValDtls.Add('SgstVal', Abs(SGSTAmt));
-        ValDtls.Add('IgstVal', Abs(IGSTAmt));
-        ValDtls.Add('CesVal', Abs(CessAmt));
+        ValDtls.Add('CgstVal', Abs(TotalCGST));
+        ValDtls.Add('SgstVal', Abs(TotalSGST));
+        ValDtls.Add('IgstVal', Abs(TotalIGST));
+        ValDtls.Add('CesVal', Abs(TotalCess));
         ValDtls.Add('StCesVal', 0);
         ValDtls.Add('Discount', 0);
         ValDtls.Add('OthChrg', 0);
         ValDtls.Add('RndOffAmt', 0);
-        ValDtls.Add('TotInvVal', Abs(AssVal) + Abs(CGSTAmt) + Abs(SGSTAmt) + Abs(IGSTAmt) + Abs(CessAmt));
+        ValDtls.Add('TotInvVal', Abs(AssVal) + Abs(TotalCGST) + Abs(TotalSGST) + Abs(TotalIGST) + Abs(TotalCess));
         Json.Add('ValDtls', ValDtls);
 
         //
@@ -508,6 +508,10 @@ codeunit 50002 "EI Generate IRN Mgt"
         IGSTAmt: Decimal;
         CessAmt: Decimal;
         GSTComponentCode: Text;
+        TotalCGST: Decimal;
+        TotalSGST: Decimal;
+        TotalIGST: Decimal;
+        TotalCess: Decimal;
 
     local procedure CalculateGSTAmounts(DocNo: Code[20]; DocLineNo: Integer)
     var
@@ -588,6 +592,33 @@ codeunit 50002 "EI Generate IRN Mgt"
             repeat
                 AssVal += Abs(Line."Line Amount" - Line."Line Discount Amount");
             until Line.Next() = 0;
+    end;
+
+    local procedure CalculateGSTHeader(DocNo: Code[20])
+    var
+        GSTDetailLedger: Record "Detailed GST Ledger Entry";
+    begin
+        Clear(TotalCGST);
+        Clear(TotalSGST);
+        Clear(TotalIGST);
+        Clear(TotalCess);
+
+        GSTDetailLedger.Reset();
+        GSTDetailLedger.SetRange("Document No.", DocNo);
+
+        if GSTDetailLedger.FindSet() then
+            repeat
+                case GSTDetailLedger."GST Component Code" of
+                    'CGST':
+                        TotalCGST += GSTDetailLedger."GST Amount";
+                    'SGST':
+                        TotalSGST += GSTDetailLedger."GST Amount";
+                    'IGST':
+                        TotalIGST += GSTDetailLedger."GST Amount";
+                    'CESS':
+                        TotalCess += GSTDetailLedger."GST Amount";
+                end;
+            until GSTDetailLedger.Next() = 0;
     end;
 
     procedure JSONTest()
