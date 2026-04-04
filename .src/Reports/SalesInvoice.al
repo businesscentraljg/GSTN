@@ -61,8 +61,23 @@ report 50003 "Sales Invoice"
                 column(CST_No_CompInfo; CompanyInfo."C.S.T No.")
                 {
                 } */
-            column(GST_CompanyInfo; 'GST Reg. No. ' + CompanyInfo."GST Registration No.")
+            column(GST_CompanyInfo; CompanyInfo."GST Registration No.")
             {
+            }
+            column(CompanyInfoStateCode; CompanyInfoStateCode)
+            {
+            }
+            column(CompanyInfoStateofSupply; CompanyInfoStateofSupply)
+            {
+            }
+            column(BankName_CompanyInfo; CompanyInfo."Bank Name")
+            { }
+            column(BankAccountNo_CompanyInfo; CompanyInfo."Bank Account No.")
+            {
+            }
+            column(BankBranchNo_CompanyInfo; CompanyInfo."Bank Branch No.")
+            {
+
             }
             column(GST_Loc_noinfo; RecLocation."GST Registration No.")
             {
@@ -190,7 +205,7 @@ report 50003 "Sales Invoice"
             column(DocumentDate_PurchaseHeader; "Sales Invoice Header"."Document Date")
             {
             }
-            column(Email; "RecPurch&PaySetup"."Order Nos.") //23092025
+            column(Email; "Sales Invoice Header"."Sell-to E-Mail") //23092025
             {
             }
             column(Note1; "RecPurch&PaySetup"."Order Nos.") //23092025
@@ -283,6 +298,30 @@ report 50003 "Sales Invoice"
             column(QRCodeImage; "Sales Invoice Header"."QR Code Img")
             {
             }
+            column(IRN_Hash; "IRN Hash")
+            {
+            }
+            column(Acknowledgement_No_; "Acknowledgement No.")
+            {
+
+            }
+            column(Acknowledgement_Date; "Acknowledgement Date")
+            {
+
+            }
+            column(StateCode; StateCode)
+            {
+
+            }
+            column(StateofSupply; StateofSupply)
+            {
+
+            }
+            column(Vehicle_No_; "Vehicle No.")
+            {
+            }
+            column(E_Way_Bill_No_; "E-Way Bill No.")
+            { }
             dataitem("Purchase Line1"; "Sales Invoice Line")
             {
                 DataItemLink = "Document No." = FIELD("No.");
@@ -581,9 +620,20 @@ report 50003 "Sales Invoice"
                 IF "RecPurch&PaySetup".GET() THEN;
                 //IF RecPurchComLine.GET() THEN;
 
-                RecState.SETRANGE(RecState.Code, State);      // IF State are same then VAT else CST done 28-04-2016
+                /* RecState.SETRANGE(RecState.Code, State);      // IF State are same then VAT else CST done 28-04-2016
                 IF RecState.FINDFIRST THEN
+                    VendState := RecState.Description; */
+
+                if RecState.Get(CompanyInfo."State Code") then begin
+                    CompanyInfoStateCode := RecState."State Code (GST Reg. No.)";
+                    CompanyInfoStateofSupply := RecState.Description;
+                end;
+
+                if RecState.Get("Sales Invoice Header"."GST Bill-to State Code") then begin
                     VendState := RecState.Description;
+                    StateCode := RecState."State Code (GST Reg. No.)";
+                    StateofSupply := RecState.Description;
+                end;
 
 
 
@@ -830,6 +880,14 @@ report 50003 "Sales Invoice"
         RecPurchHeadArchive: Record "Sales Header Archive";
         AmndNo: Integer;
         VendState: Text;
+
+        StateCode: Code[10];
+
+        StateofSupply: Text[100];
+
+        CompanyInfoStateCode: Code[10];
+
+        CompanyInfoStateofSupply: Text[100];
         CompState: Text;
         RecState: Record State;
         // RecExcise: Record "13711";
