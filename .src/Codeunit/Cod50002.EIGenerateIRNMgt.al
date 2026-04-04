@@ -110,6 +110,7 @@ codeunit 50002 "EI Generate IRN Mgt"
         OS: OutStream;
         IS: InStream;
         QRText: Text;
+        AckDateTime: DateTime;
     begin
         Root.ReadFrom(ResponseText);
 
@@ -135,8 +136,12 @@ codeunit 50002 "EI Generate IRN Mgt"
                 SalesInvHdr."Acknowledgement No." := Staging."Ack No.";
             end;
 
-            if Result.Get('AckDt', Token) then
-                Staging."Ack Date" := Token.AsValue().AsText();
+            if Result.Get('AckDt', Token) then begin
+                if Evaluate(AckDateTime, Token.AsValue().AsText()) then begin
+                    Staging."Ack Date" := AckDateTime;
+                    SalesInvHdr."Acknowledgement Date" := AckDateTime;
+                end;
+            end;
 
             if Result.Get('SignedInvoice', Token) then
                 SaveTextToBlob(Token.AsValue().AsText(), Staging, 'Signed Invoice');
@@ -408,15 +413,18 @@ codeunit 50002 "EI Generate IRN Mgt"
         AttribArray: JsonArray;
         BchDtlsObj: JsonObject;
         AttribObj1: JsonObject;
+        SerialNo: Integer;
     begin
+        Clear(SerialNo);
         Line.Reset();
         Line.SetRange("Document No.", SalesInvHdr."No.");
         if Line.FindSet() then
             repeat
+                SerialNo += 1;
                 Clear(ItemObj);
                 CalculateGSTAmounts(SalesInvHdr."No.", Line."Line No.");
 
-                ItemObj.Add('SlNo', Line."Document No.");
+                ItemObj.Add('SlNo', Format(SerialNo));
                 ItemObj.Add('PrdDesc', Line.Description);
                 ItemObj.Add('IsServc', 'N');
                 ItemObj.Add('HsnCd', Line."HSN/SAC Code");
