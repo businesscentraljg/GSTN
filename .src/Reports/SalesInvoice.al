@@ -790,7 +790,7 @@ report 50003 "Sales Invoice"
                 lTxt := UPPERCASE(lTxt);
                 lTxt := lTxt + COPYSTR(TotalInvAmtinWords[1], 2);
                 //MESSAGE('%1',lTxt);
-                TotalInvAmtinWords[1] := lTxt + ' Only.';
+                TotalInvAmtinWords[1] := lTxt + 'Only.';
                 //MESSAGE(FORMAT(TotalInvAmtinWords[1]));
             end;
 
@@ -1048,25 +1048,25 @@ report 50003 "Sales Invoice"
         IF "Sales Invoice Header"."Currency Code" <> '' THEN
             recCurrency.GET("Sales Invoice Header"."Currency Code");
         IF "Sales Invoice Header"."Currency Code" <> '' THEN
-            AddToNoText(NoText, NoTextIndex, PrintExponent, '' + Text062 + '')
+            AddToNoText(NoText, NoTextIndex, PrintExponent, '' + '' + '')
         ELSE
-            AddToNoText(NoText, NoTextIndex, PrintExponent, Text062 + '');//recCurrency."Currency Description"
+            AddToNoText(NoText, NoTextIndex, PrintExponent, '' + '');//recCurrency."Currency Description"
 
-        //for displaying cents
-        No := No * 100;
-        Tens := No DIV 10;
-        Ones := No MOD 10;
-        IF No < 1 THEN
-            AddToNoText(NoText, NoTextIndex, PrintExponent, Text026)
-        ELSE BEGIN
-            IF Tens >= 2 THEN BEGIN
-                AddToNoText(NoText, NoTextIndex, PrintExponent, TensText[Tens]);
-                IF Ones > 0 THEN
-                    AddToNoText(NoText, NoTextIndex, PrintExponent, OnesText[Ones]);
-            END ELSE
-                IF (Tens * 10 + Ones) > 0 THEN
-                    AddToNoText(NoText, NoTextIndex, PrintExponent, OnesText[Tens * 10 + Ones]);
-        END;
+        /*  //for displaying cents
+         No := No * 100;
+         Tens := No DIV 10;
+         Ones := No MOD 10;
+         IF No < 1 THEN
+             AddToNoText(NoText, NoTextIndex, PrintExponent, Text026)
+         ELSE BEGIN
+             IF Tens >= 2 THEN BEGIN
+                 AddToNoText(NoText, NoTextIndex, PrintExponent, TensText[Tens]);
+                 IF Ones > 0 THEN
+                     AddToNoText(NoText, NoTextIndex, PrintExponent, OnesText[Ones]);
+             END ELSE
+                 IF (Tens * 10 + Ones) > 0 THEN
+                     AddToNoText(NoText, NoTextIndex, PrintExponent, OnesText[Tens * 10 + Ones]);
+         END; */
     end;
 
     local procedure AddToNoText(var NoText: array[2] of Text[80]; var NoTextIndex: Integer; var PrintExponent: Boolean; AddText: Text[30])

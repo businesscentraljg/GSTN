@@ -11,7 +11,7 @@
       <am:Name>MSRB</am:Name>
       <am:Version>15.1.30001.02</am:Version>
     </am:UpdatedBy>
-    <am:LastModifiedTimestamp>2026-04-06T14:59:47.6102565Z</am:LastModifiedTimestamp>
+    <am:LastModifiedTimestamp>2026-04-08T15:19:56.1100843Z</am:LastModifiedTimestamp>
   </am:AuthoringMetadata>
   <AutoRefresh>0</AutoRefresh>
   <DataSources>
@@ -325,6 +325,9 @@
         <Field Name="Vehicle_No_">
           <DataField>Vehicle_No_</DataField>
         </Field>
+        <Field Name="E_Way_Bill_No_">
+          <DataField>E_Way_Bill_No_</DataField>
+        </Field>
         <Field Name="Line_No_">
           <DataField>Line_No_</DataField>
         </Field>
@@ -506,25 +509,25 @@
                 <TablixBody>
                   <TablixColumns>
                     <TablixColumn>
-                      <Width>0.95571in</Width>
+                      <Width>0.95075in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>1.72027in</Width>
+                      <Width>1.71531in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>0.87787in</Width>
+                      <Width>0.87291in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>0.9575in</Width>
+                      <Width>0.95254in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>1.31956in</Width>
+                      <Width>1.3146in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>0.57003in</Width>
+                      <Width>0.56507in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>1.1666in</Width>
+                      <Width>1.16164in</Width>
                     </TablixColumn>
                   </TablixColumns>
                   <TablixRows>
@@ -558,9 +561,6 @@
                                   <Style>None</Style>
                                   <Width>0.5pt</Width>
                                 </Border>
-                                <LeftBorder>
-                                  <Style>Solid</Style>
-                                </LeftBorder>
                                 <PaddingLeft>2pt</PaddingLeft>
                                 <PaddingRight>2pt</PaddingRight>
                                 <PaddingTop>2pt</PaddingTop>
@@ -2836,7 +2836,7 @@
                 <Top>0.01108in</Top>
                 <Left>0.02659cm</Left>
                 <Height>2.19741in</Height>
-                <Width>7.56754in</Width>
+                <Width>7.53281in</Width>
                 <Style>
                   <Border>
                     <Style>None</Style>
@@ -3538,37 +3538,37 @@
                 <TablixBody>
                   <TablixColumns>
                     <TablixColumn>
-                      <Width>0.26872in</Width>
+                      <Width>0.26714in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>0.74772in</Width>
+                      <Width>0.74614in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>1.38942in</Width>
+                      <Width>1.38784in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>0.63333in</Width>
+                      <Width>0.63175in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>0.49747in</Width>
+                      <Width>0.49589in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>0.49421in</Width>
+                      <Width>0.49263in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>0.72024in</Width>
+                      <Width>0.71866in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>0.94056in</Width>
+                      <Width>0.93898in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>0.4401in</Width>
+                      <Width>0.43852in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>0.69967in</Width>
+                      <Width>0.69809in</Width>
                     </TablixColumn>
                     <TablixColumn>
-                      <Width>0.71875in</Width>
+                      <Width>0.71717in</Width>
                     </TablixColumn>
                   </TablixColumns>
                   <TablixRows>
@@ -4064,11 +4064,6 @@
                                 <BottomBorder>
                                   <Style>Solid</Style>
                                 </BottomBorder>
-                                <RightBorder>
-                                  <Color>Black</Color>
-                                  <Style>Solid</Style>
-                                  <Width>1pt</Width>
-                                </RightBorder>
                                 <PaddingLeft>2pt</PaddingLeft>
                                 <PaddingRight>6pt</PaddingRight>
                                 <PaddingTop>2pt</PaddingTop>
@@ -4492,11 +4487,6 @@
                                 <Border>
                                   <Style>None</Style>
                                 </Border>
-                                <RightBorder>
-                                  <Color>Black</Color>
-                                  <Style>Solid</Style>
-                                  <Width>1pt</Width>
-                                </RightBorder>
                                 <PaddingLeft>2pt</PaddingLeft>
                                 <PaddingRight>4pt</PaddingRight>
                                 <PaddingTop>2pt</PaddingTop>
@@ -4924,11 +4914,6 @@
                                 <Border>
                                   <Style>None</Style>
                                 </Border>
-                                <RightBorder>
-                                  <Color>Black</Color>
-                                  <Style>Solid</Style>
-                                  <Width>1pt</Width>
-                                </RightBorder>
                                 <PaddingLeft>2pt</PaddingLeft>
                                 <PaddingRight>4pt</PaddingRight>
                                 <PaddingTop>2pt</PaddingTop>
@@ -5013,11 +4998,6 @@
                                 <Border>
                                   <Style>None</Style>
                                 </Border>
-                                <RightBorder>
-                                  <Color>Black</Color>
-                                  <Style>Solid</Style>
-                                  <Width>1pt</Width>
-                                </RightBorder>
                                 <PaddingLeft>2pt</PaddingLeft>
                                 <PaddingRight>2pt</PaddingRight>
                                 <PaddingBottom>1pt</PaddingBottom>
@@ -5457,11 +5437,6 @@
                                   <Style>None</Style>
                                   <Width>0.5pt</Width>
                                 </Border>
-                                <RightBorder>
-                                  <Color>Black</Color>
-                                  <Style>Solid</Style>
-                                  <Width>1pt</Width>
-                                </RightBorder>
                                 <PaddingLeft>2pt</PaddingLeft>
                                 <PaddingRight>6pt</PaddingRight>
                                 <PaddingTop>2pt</PaddingTop>
@@ -5928,9 +5903,7 @@
                                   <Width>0.5pt</Width>
                                 </Border>
                                 <RightBorder>
-                                  <Color>Black</Color>
-                                  <Style>Solid</Style>
-                                  <Width>1pt</Width>
+                                  <Style>None</Style>
                                 </RightBorder>
                                 <PaddingLeft>2pt</PaddingLeft>
                                 <PaddingRight>4pt</PaddingRight>
@@ -6004,32 +5977,12 @@
                 <Top>5.6397cm</Top>
                 <Left>0.01047in</Left>
                 <Height>0.91991in</Height>
-                <Width>7.55019in</Width>
+                <Width>7.53281in</Width>
                 <ZIndex>2</ZIndex>
                 <Style>
                   <Border>
-                    <Style>Solid</Style>
+                    <Style>None</Style>
                   </Border>
-                  <TopBorder>
-                    <Color>Black</Color>
-                    <Style>Solid</Style>
-                    <Width>1pt</Width>
-                  </TopBorder>
-                  <BottomBorder>
-                    <Color>Black</Color>
-                    <Style>Solid</Style>
-                    <Width>1pt</Width>
-                  </BottomBorder>
-                  <LeftBorder>
-                    <Color>Black</Color>
-                    <Style>Solid</Style>
-                    <Width>1pt</Width>
-                  </LeftBorder>
-                  <RightBorder>
-                    <Color>Black</Color>
-                    <Style>Solid</Style>
-                    <Width>1pt</Width>
-                  </RightBorder>
                 </Style>
               </Tablix>
               <Tablix Name="Tablix8">
@@ -6646,7 +6599,7 @@
                 <TablixBody>
                   <TablixColumns>
                     <TablixColumn>
-                      <Width>0.97616in</Width>
+                      <Width>0.94964in</Width>
                     </TablixColumn>
                   </TablixColumns>
                   <TablixRows>
@@ -7274,7 +7227,7 @@
                               <Paragraph>
                                 <TextRuns>
                                   <TextRun>
-                                    <Value>Final Amount     IRN</Value>
+                                    <Value>Final Amount     INR</Value>
                                     <Style>
                                       <FontSize>8pt</FontSize>
                                       <FontWeight>Bold</FontWeight>
@@ -7308,8 +7261,8 @@
                 <DataSetName>DataSet_Result</DataSetName>
                 <Top>8.36311cm</Top>
                 <Left>5.45869in</Left>
-                <Height>1.57005in</Height>
-                <Width>2.11111in</Width>
+                <Height>1.57006in</Height>
+                <Width>2.08459in</Width>
                 <ZIndex>4</ZIndex>
                 <Style>
                   <Border>
@@ -7377,7 +7330,7 @@
                 <Top>3.15416in</Top>
                 <Left>6.60838in</Left>
                 <Height>0.16529in</Height>
-                <Width>0.95228in</Width>
+                <Width>0.9349in</Width>
                 <ZIndex>6</ZIndex>
                 <Style>
                   <Border>
@@ -7395,9 +7348,9 @@
               </Textbox>
             </ReportItems>
             <KeepTogether>true</KeepTogether>
-            <Left>0.06642in</Left>
+            <Left>0.0838in</Left>
             <Height>6.33972in</Height>
-            <Width>7.57804in</Width>
+            <Width>7.56062in</Width>
             <Style>
               <Border>
                 <Style>Solid</Style>
@@ -7406,10 +7359,10 @@
             </Style>
           </Rectangle>
         </ReportItems>
-        <Height>6.33972in</Height>
+        <Height>6.35361in</Height>
         <Style />
       </Body>
-      <Width>7.64446in</Width>
+      <Width>7.64442in</Width>
       <Page>
         <PageHeader>
           <Height>2.08846in</Height>
