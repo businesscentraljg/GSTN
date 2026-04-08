@@ -2,16 +2,10 @@ namespace GSTN.GSTN;
 
 using Microsoft.Sales.History;
 
-tableextension 50000 "Sales Invoice Header Ext" extends "Sales Invoice Header"
+tableextension 50003 "Sales Shipment Header Ext" extends "Sales Shipment Header"
 {
     fields
     {
-        field(50000; "QR Code Img"; Media)
-        {
-            Caption = 'QR Code Img';
-            DataClassification = CustomerContent;
-        }
-
         field(60000; "Transporter ID"; Code[20])
         {
             Caption = 'Transporter ID';
