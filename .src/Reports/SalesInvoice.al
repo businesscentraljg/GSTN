@@ -172,6 +172,9 @@ report 50003 "Sales Invoice"
             column(CurrencyCode_PurchaseHeader; "Sales Invoice Header"."Currency Code")
             {
             }
+            column(Ship_to_Customer; "Ship-to Customer")
+            {
+            }
             column(ShiptoPostCode_PurchaseHeader; "Sales Invoice Header"."Ship-to Post Code")
             {
             }
@@ -188,6 +191,18 @@ report 50003 "Sales Invoice"
             {
             }
             column(ShiptoCity_PurchaseHeader; "Sales Invoice Header"."Ship-to City")
+            {
+            }
+            column(Ship_to_Phone_No_; "Ship-to Phone No.")
+            {
+            }
+            column(ShipStateCode; ShipStateCode)
+            {
+            }
+            column(ShipStateofSupply; ShipStateofSupply)
+            {
+            }
+            column(GST_Customer_Type; "GST Customer Type")
             {
             }
             column(Currency_Code; CurrencyCode)
@@ -635,7 +650,10 @@ report 50003 "Sales Invoice"
                     StateofSupply := RecState.Description;
                 end;
 
-
+                if RecState.Get("Sales Invoice Header"."Ship-to Code") then begin
+                    ShipStateCode := RecState."State Code (GST Reg. No.)";
+                    ShipStateofSupply := RecState.Description;
+                end;
 
                 IF "Sales Invoice Header"."Currency Code" <> '' THEN
                     CurrencyCode := '(' + "Sales Invoice Header"."Currency Code" + ')'
@@ -889,14 +907,12 @@ report 50003 "Sales Invoice"
         RecPurchHeadArchive: Record "Sales Header Archive";
         AmndNo: Integer;
         VendState: Text;
-
         StateCode: Code[10];
-
         StateofSupply: Text[100];
-
         CompanyInfoStateCode: Code[10];
-
         CompanyInfoStateofSupply: Text[100];
+        ShipStateCode: Code[10];
+        ShipStateofSupply: Text[100];
         CompState: Text;
         RecState: Record State;
         // RecExcise: Record "13711";
