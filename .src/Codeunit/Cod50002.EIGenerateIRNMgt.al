@@ -57,8 +57,8 @@ codeunit 50002 "EI Generate IRN Mgt"
 
         // 🔥 ADAEQUARE REQUIRED HEADERS
         Headers.Add('Authorization', 'Bearer ' + GSPMgmt.GetValidAccessToken());
-        Headers.Add('user_name', 'adqgspusr1');
-        Headers.Add('password', 'GspRoot@1234');
+        Headers.Add('user_name', CompanyInfo."GST User Name");
+        Headers.Add('password', CompanyInfo."GST Password");
         Headers.Add('gstin', CompanyInfo."GST Registration No.");
         Headers.Add('requestid', RequestId);
 
@@ -68,8 +68,6 @@ codeunit 50002 "EI Generate IRN Mgt"
         Client.Send(Request, Response);
         Response.Content.ReadAs(ResponseText);
 
-        if Setup."Show Message" then
-            Message(ResponseText);
 
         // if not JsonResp.ReadFrom(ResponseText) then
         //     Error('Invalid response JSON');
@@ -95,6 +93,16 @@ codeunit 50002 "EI Generate IRN Mgt"
         // Insert staging
         Staging.Modify();
 
+        If Response.IsSuccessStatusCode() then begin
+            Response.Content.ReadAs(ResponseText);
+            if GuiAllowed then
+                //if Setup."Show Message" then
+                    Message(ResponseText);
+        end else begin
+            Response.Content.ReadAs(ResponseText);
+            if GuiAllowed then
+                Error(ResponseText);
+        end;
     end;
 
     local procedure ParseIRNResponse(ResponseText: Text; var Staging: Record "E-Invoice IRN Staging"; var SalesInvHdr: Record "Sales Invoice Header")
@@ -165,16 +173,20 @@ codeunit 50002 "EI Generate IRN Mgt"
             if Result.Get('Status', Token) then
                 Staging."IRN Status" := Token.AsValue().AsText();
 
-            if Result.Get('EwbNo', Token) then begin
-                Staging."EWB No." := Token.AsValue().AsText();
-                SalesInvHdr."E-Way Bill No." := Staging."EWB No.";
+            if Result.Get('EwbNo', Token) then
+                if Token.IsValue() then begin
+                    Staging."EWB No." := Format(Token.AsValue());
+                    SalesInvHdr."E-Way Bill No." := Staging."EWB No.";
+                end;
+
+            if Result.Get('EwbDt', Token) then begin
+                if Token.IsValue() then
+                    Staging."EWB Date" := Format(Token.AsValue());
             end;
 
-            if Result.Get('EwbDt', Token) then
-                Staging."EWB Date" := Token.AsValue().AsText();
-
             if Result.Get('EwbValidTill', Token) then
-                Staging."EWB Valid Till" := Token.AsValue().AsText();
+                if Token.IsValue() then
+                    Staging."EWB Valid Till" := Format(Token.AsValue());
 
             Clear(JO);
             if Root.Get('info', Token) then begin
@@ -195,8 +207,8 @@ codeunit 50002 "EI Generate IRN Mgt"
                         Staging."InfCd" := Token.AsValue().AsText();
 
                     if JO.Get('Desc', Token) then
-                        Staging."Desc" := Token.AsValue().AsText();
-
+                        if Token.IsValue() then
+                            Staging."Desc" := Format(Token.AsValue());
                 end;
             end;
         end;
@@ -252,6 +264,8 @@ codeunit 50002 "EI Generate IRN Mgt"
         RandomNo: Integer;
         NewDocNo: Text;
         JVal: JsonValue;
+        DistVal: JsonValue;
+        DistInt: Integer;
     begin
         CompanyInfo.Get();
         SalesInvHdr.CalcFields(Amount, "Amount Including VAT");
@@ -262,7 +276,7 @@ codeunit 50002 "EI Generate IRN Mgt"
 
         // Transaction Details
         TranDtls.Add('TaxSch', 'GST');
-        TranDtls.Add('SupTyp', 'B2B');
+        TranDtls.Add('SupTyp', GetSupplyType(SalesInvHdr));
         TranDtls.Add('RegRev', 'N');
         JVal.SetValueToNull();
         //TranDtls.Add('EcmGstin', JVal);
@@ -321,28 +335,28 @@ codeunit 50002 "EI Generate IRN Mgt"
         ValDtls.Add('SgstVal', Abs(TotalSGST));
         ValDtls.Add('IgstVal', Abs(TotalIGST));
         ValDtls.Add('CesVal', Abs(TotalCess));
-        ValDtls.Add('StCesVal', 0);
-        ValDtls.Add('Discount', 0);
+        ValDtls.Add('StCesVal', Abs(TotalCess));
+        ValDtls.Add('Discount', Abs(ValDiscountAmt));  //Line - inv. discount value
         ValDtls.Add('OthChrg', 0);
         ValDtls.Add('RndOffAmt', 0);
         ValDtls.Add('TotInvVal', Abs(AssVal) + Abs(TotalCGST) + Abs(TotalSGST) + Abs(TotalIGST) + Abs(TotalCess));
         Json.Add('ValDtls', ValDtls);
 
         //
-        PayDtls.Add('Nm', 'ABCDE');
-        PayDtls.Add('Accdet', '5697389713210');
-        PayDtls.Add('Mode', 'Cash');
-        PayDtls.Add('Fininsbr', 'SBIN11000');
-        PayDtls.Add('Payterm', SalesInvHdr."Payment Terms Code");
-        PayDtls.Add('Payinstr', 'Gift');
-        PayDtls.Add('Crtrn', 'test');
-        PayDtls.Add('Dirdr', 'test');
-        PayDtls.Add('Crday', 100);
-        PayDtls.Add('Paidamt', 10000);
-        PayDtls.Add('Paymtdue', 5000);
-        Json.Add('PayDtls', PayDtls);
+        // PayDtls.Add('Nm', CompanyInfo.Name);
+        // PayDtls.Add('Accdet', CompanyInfo."Bank Account No.");
+        // PayDtls.Add('Mode', 'Bank Transfer');
+        // PayDtls.Add('Fininsbr', CompanyInfo."Bank Branch No.");
+        // PayDtls.Add('Payterm', SalesInvHdr."Payment Terms Code");
+        // PayDtls.Add('Payinstr', '');
+        // PayDtls.Add('Crtrn', '');
+        // PayDtls.Add('Dirdr', '');
+        // PayDtls.Add('Crday', 0);
+        // PayDtls.Add('Paidamt', 0);
+        // PayDtls.Add('Paymtdue', 0);
+        // Json.Add('PayDtls', PayDtls);
 
-        RefDtls.Add('InvRm', 'TEST');
+        RefDtls.Add('InvRm', SalesInvHdr."Reference Invoice No.");
         // DocPerdDtls
         DocPerdDtls.Add('InvStDt', Format(SalesInvHdr."Posting Date", 0, '<Day,2>/<Month,2>/<Year4>'));
         DocPerdDtls.Add('InvEndDt', Format(SalesInvHdr."Posting Date", 0, '<Day,2>/<Month,2>/<Year4>'));
@@ -351,50 +365,62 @@ codeunit 50002 "EI Generate IRN Mgt"
         // PrecDocDtls (Array)
         PrecDocObj.Add('InvNo', SalesInvHdr."No.");
         PrecDocObj.Add('InvDt', Format(SalesInvHdr."Posting Date", 0, '<Day,2>/<Month,2>/<Year4>'));
-        PrecDocObj.Add('OthRefNo', '123456');
+        PrecDocObj.Add('OthRefNo', CopyStr(SalesInvHdr."External Document No.", 1, 20));
         PrecDocArray.Add(PrecDocObj);
         RefDtls.Add('PrecDocDtls', PrecDocArray);
 
-        // ContrDtls (Array)
-        ContrObj.Add('RecAdvRefr', 'Doc/003');
-        ContrObj.Add('RecAdvDt', '01/08/2020');
-        ContrObj.Add('Tendrefr', 'Abc001');
-        ContrObj.Add('Contrrefr', 'Co123');
-        ContrObj.Add('Extrefr', 'Yo456');
-        ContrObj.Add('Projrefr', 'Doc-456');
-        ContrObj.Add('Porefr', 'Doc-789');
-        ContrObj.Add('PoRefDt', '01/08/2020');
-        ContrArray.Add(ContrObj);
-        RefDtls.Add('ContrDtls', ContrArray);
+        // // ContrDtls (Array)
+        // ContrObj.Add('RecAdvRefr', '');
+        // ContrObj.Add('RecAdvDt', '');
+        // ContrObj.Add('Tendrefr', '');
+        // ContrObj.Add('Contrrefr', '');
+        // ContrObj.Add('Extrefr', '');
+        // ContrObj.Add('Projrefr', '');
+        // ContrObj.Add('Porefr', '');
+        // ContrObj.Add('PoRefDt', '');
+        // ContrArray.Add(ContrObj);
+        // RefDtls.Add('ContrDtls', ContrArray);
 
-        Json.Add('RefDtls', RefDtls);
+        // Json.Add('RefDtls', RefDtls);
 
-        AddlDocObj.Add('Url', 'https://einv-apisandbox.nic.in');
-        AddlDocObj.Add('Docs', 'Test Doc');
-        AddlDocObj.Add('Info', 'Document Test');
+        // AddlDocObj.Add('Url', '');
+        // AddlDocObj.Add('Docs', '');
+        // AddlDocObj.Add('Info', '');
 
-        AddlDocArray.Add(AddlDocObj);
-        Json.Add('AddlDocDtls', AddlDocArray);
+        // AddlDocArray.Add(AddlDocObj);
+        // Json.Add('AddlDocDtls', AddlDocArray);
 
-        ExpDtls.Add('ShipBNo', 'A-248');
-        ExpDtls.Add('ShipBDt', '01/08/2020');
-        ExpDtls.Add('Port', 'INABG1');
-        ExpDtls.Add('RefClm', 'N');
-        ExpDtls.Add('ForCur', 'AED');
-        ExpDtls.Add('CntCode', 'AE');
-        // Add ExpDuty as JSON null by using an uninitialized JsonToken
-        ExpDtls.Add('ExpDuty', NullToken);
+        // ExpDtls.Add('ShipBNo', '');
+        // ExpDtls.Add('ShipBDt', '');
+        // ExpDtls.Add('Port', '');
+        // ExpDtls.Add('RefClm', '');
+        // ExpDtls.Add('ForCur', '');
+        // ExpDtls.Add('CntCode', '');
+        // // Add ExpDuty as JSON null by using an uninitialized JsonToken
+        // ExpDtls.Add('ExpDuty', NullToken);
 
 
-        Json.Add('ExpDtls', ExpDtls);
+        //Json.Add('ExpDtls', ExpDtls);
 
-        EwbDtls.Add('Transid', '37AMBPG7773M002');
-        EwbDtls.Add('Transname', 'XYZ EXPORTS');
-        EwbDtls.Add('Distance', 0);
-        EwbDtls.Add('Transdocno', NullToken);
-        EwbDtls.Add('TransdocDt', NullToken);
-        EwbDtls.Add('Vehno', 'ka123456');
-        EwbDtls.Add('Vehtype', 'R');
+
+        EwbDtls.Add('Transid', SalesInvHdr."Transporter ID");
+        if SalesInvHdr."Transport Name" <> '' then
+            EwbDtls.Add('Transname', SalesInvHdr."Transport Name");
+
+        DistInt := Round(SalesInvHdr."Distance (Km)", 1, '<');
+        DistVal.SetValue(DistInt);
+        EwbDtls.Add('Distance', DistVal);
+
+        if SalesInvHdr."Tranport Document Number" <> '' then
+            EwbDtls.Add('Transdocno', SalesInvHdr."Tranport Document Number");
+        if SalesInvHdr."Transport Document Date" <> 0D then
+            EwbDtls.Add('TransdocDt', SalesInvHdr."Transport Document Date");
+
+        EwbDtls.Add('Vehno', SalesInvHdr."Vehicle No.");
+        EwbDtls.Add('Vehtype', GetVechicalType(SalesInvHdr));
+        // if SalesInvHdr."Mode of Transport" <> '' then
+        //     EwbDtls.Add('TransMode', SalesInvHdr."Mode of Transport")
+        // else
         EwbDtls.Add('TransMode', '1');
 
         Json.Add('EwbDtls', EwbDtls);
@@ -430,13 +456,13 @@ codeunit 50002 "EI Generate IRN Mgt"
                 ItemObj.Add('HsnCd', Line."HSN/SAC Code");
                 //ItemObj.Add('Barcde', '123456');
                 ItemObj.Add('Qty', Line.Quantity);
-                ItemObj.Add('FreeQty', Line.Quantity);
+                //ItemObj.Add('FreeQty', 0);
                 ItemObj.Add('Unit', Line."Unit of Measure Code");
                 ItemObj.Add('UnitPrice', Line."Unit Price");
                 ItemObj.Add('TotAmt', Line."Line Amount");
-                ItemObj.Add('Discount', Line."Line Discount Amount");
+                //ItemObj.Add('Discount', Line."Line Discount Amount");
 
-                ItemObj.Add('PreTaxVal', 0);
+                // ItemObj.Add('PreTaxVal', 0);
                 ItemObj.Add('AssAmt', Line."Line Amount" - Line."Line Discount Amount");
                 ItemObj.Add('GstRt', CGSTRate + SGSTRate + IGSTRate);
 
@@ -451,30 +477,30 @@ codeunit 50002 "EI Generate IRN Mgt"
                 ItemObj.Add('StateCesNonAdvlAmt', 0);
                 ItemObj.Add('OthChrg', 0);
                 ItemObj.Add('TotItemVal', Abs(Line."Line Amount" - Line."Line Discount Amount") + Abs(CGSTAmt) + Abs(SGSTAmt) + Abs(IGSTAmt) + Abs(CessAmt));
-                ItemObj.Add('OrdLineRef', '3256');
-                ItemObj.Add('OrgCntry', 'IN');
-                ItemObj.Add('PrdSlNo', '12345');
+                // ItemObj.Add('OrdLineRef', '3256');
+                // ItemObj.Add('OrgCntry', 'IN');
+                // ItemObj.Add('PrdSlNo', '12345');
 
                 // -------- Batch Details (ONE object, ONE use) --------
-                Clear(BchDtlsObj);
-                BchDtlsObj.Add('Nm', 'BATCH001');
-                BchDtlsObj.Add(
-                    'Expdt',
-                    Format(Line."Shipment Date", 0, '<Day,2>/<Month,2>/<Year4>')
-                );
-                BchDtlsObj.Add(
-                    'wrDt',
-                    Format(WorkDate(), 0, '<Day,2>/<Month,2>/<Year4>')
-                );
-                ItemObj.Add('BchDtls', BchDtlsObj);
+                // Clear(BchDtlsObj);
+                // BchDtlsObj.Add('Nm', 'BATCH001');
+                // BchDtlsObj.Add(
+                //     'Expdt',
+                //     Format(Line."Shipment Date", 0, '<Day,2>/<Month,2>/<Year4>')
+                // );
+                // BchDtlsObj.Add(
+                //     'wrDt',
+                //     Format(WorkDate(), 0, '<Day,2>/<Month,2>/<Year4>')
+                // );
+                // ItemObj.Add('BchDtls', BchDtlsObj);
 
                 // -------- Attribute Details (ARRAY) --------
-                Clear(AttribObj1);
-                AttribObj1.Add('Nm', Line.Description);
-                AttribObj1.Add('Val', Format(Line.Amount));
-                AttribArray.Add(AttribObj1);
+                // Clear(AttribObj1);
+                // AttribObj1.Add('Nm', Line.Description);
+                // AttribObj1.Add('Val', Format(Line.Amount));
+                // AttribArray.Add(AttribObj1);
 
-                ItemObj.Add('AttribDtls', AttribArray);
+                // ItemObj.Add('AttribDtls', AttribArray);
 
 
                 Arr.Add(ItemObj);
@@ -507,6 +533,7 @@ codeunit 50002 "EI Generate IRN Mgt"
         SGSTAmt: Decimal;
         IGSTAmt: Decimal;
         CessAmt: Decimal;
+        ValDiscountAmt: Decimal;
         GSTComponentCode: Text;
         TotalCGST: Decimal;
         TotalSGST: Decimal;
@@ -585,12 +612,14 @@ codeunit 50002 "EI Generate IRN Mgt"
         Line: Record "Sales Invoice Line";
     begin
         Clear(AssVal);
+        Clear(ValDiscountAmt);
 
         Line.Reset();
         Line.SetRange("Document No.", SalesInvHdr."No.");
         if Line.FindSet() then
             repeat
                 AssVal += Abs(Line."Line Amount" - Line."Line Discount Amount");
+                ValDiscountAmt += Line."Inv. Discount Amount";
             until Line.Next() = 0;
     end;
 
@@ -619,6 +648,25 @@ codeunit 50002 "EI Generate IRN Mgt"
                         TotalCess += GSTDetailLedger."GST Amount";
                 end;
             until GSTDetailLedger.Next() = 0;
+    end;
+
+    local procedure GetSupplyType(SalesInvHdr: Record "Sales Invoice Header"): Text
+    begin
+        if SalesInvHdr."GST Customer Type" = SalesInvHdr."GST Customer Type"::Registered then
+            exit('B2B')
+        else
+            exit('B2C');
+    end;
+
+    local procedure GetVechicalType(SalesInvHdr: Record "Sales Invoice Header"): Text
+    var
+
+    begin
+        if SalesInvHdr."Vehicle Type" = SalesInvHdr."Vehicle Type"::Regular then
+            exit('R');
+
+        if SalesInvHdr."Vehicle Type" = SalesInvHdr."Vehicle Type"::ODC then
+            exit('O');
     end;
 
     procedure JSONTest()
