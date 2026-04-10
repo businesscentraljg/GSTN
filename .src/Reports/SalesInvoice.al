@@ -445,7 +445,9 @@ report 50003 "Sales Invoice"
                 column(HSNCOde; "Purchase Line1"."HSN/SAC Code")
                 {
                 }
-
+                column(Number_Integer; Number)
+                {
+                }
 
 
 
@@ -608,7 +610,7 @@ report 50003 "Sales Invoice"
                 {
                 }
             }
-            dataitem(Integer; Integer)
+            /* dataitem(Integer; Integer)
             {
                 column(Number_Integer; Integer.Number)
                 {
@@ -623,7 +625,7 @@ report 50003 "Sales Invoice"
 
                     Integer.SETRANGE(Integer.Number, 1, newCnt);
                 end;
-            }
+            } */
 
             trigger OnAfterGetRecord()
             begin
@@ -915,6 +917,7 @@ report 50003 "Sales Invoice"
         ShipStateofSupply: Text[100];
         CompState: Text;
         RecState: Record State;
+        Number: Integer;
         // RecExcise: Record "13711";
         RecPurchaser: Record "Salesperson/Purchaser";
         PurchaserName: Text;
