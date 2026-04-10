@@ -15,6 +15,21 @@
             "enableLongRunningSqlStatements": true,
             "enableSqlInformationDebugger": true,
            // "schemaUpdateMode": "ForceSync"
+        },
+         {
+            "name": "Klug Pumps",
+            "request": "launch",
+            "type": "al",
+            "environmentType": "Sandbox",
+            "environmentName": "Sandbox",
+            "tenant": "cf0930e3-6eb4-44f0-ace5-a9571ad0ced1",
+            // "startupObjectId": 22,
+            // "startupObjectType": "Page",
+            "breakOnError": "All",
+            "launchBrowser": true,
+            "enableLongRunningSqlStatements": true,
+            "enableSqlInformationDebugger": true,
+           // "schemaUpdateMode": "ForceSync"
         }
     ]
 }

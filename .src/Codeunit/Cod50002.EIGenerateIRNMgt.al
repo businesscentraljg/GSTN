@@ -289,7 +289,7 @@ codeunit 50002 "EI Generate IRN Mgt"
         NewDocNo := SalesInvHdr."No." + '-' + Format(RandomNo);
         // Document Details
         DocDtls.Add('Typ', 'INV');
-        DocDtls.Add('No', NewDocNo);
+        DocDtls.Add('No', SalesInvHdr."No.");
         DocDtls.Add(
             'Dt',
             Format(SalesInvHdr."Posting Date", 0, '<Day,2>/<Month,2>/<Year4>')
