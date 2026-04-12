@@ -46,6 +46,10 @@ page 50000 "GSP Authentication Setup"
                 {
                     ToolTip = 'Specifies the value of the JTI field.', Comment = '%';
                 }
+                field("C Type"; Rec."C Type")
+                {
+                    ToolTip = 'Specifies the value of the Content Type field.', Comment = '%';
+                }
                 field("Show Message"; Rec."Show Message")
                 {
                     ToolTip = 'Specifies the value of the Show Message field.', Comment = '%';

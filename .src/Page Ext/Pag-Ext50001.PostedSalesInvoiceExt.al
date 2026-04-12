@@ -56,14 +56,13 @@ pageextension 50001 "Posted Sales Invoice Ext1" extends "Posted Sales Invoice"
                 Image = SendElectronicDocument;
                 Promoted = true;
                 PromotedCategory = Process;
-                Visible = false;
+                //Visible = false;
                 trigger OnAction()
                 var
                     EWayBillMgt: Codeunit "Generate E-Way Bill Enriched";
                 begin
                     //Rec.TestField("Customer GST Reg. No.");
                     EWayBillMgt.GenerateEWayBillEnriched(Rec."No.");
-                    Message('E-Way Bill process completed');
                 end;
             }
         }

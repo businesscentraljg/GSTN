@@ -41,6 +41,10 @@ table 50000 "GSP Authentication Setup"
         {
             Caption = 'Base URL';
         }
+        field(11; "C Type"; Text[50])
+        {
+            Caption = 'Content Type';
+        }
     }
     keys
     {
