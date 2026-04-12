@@ -258,6 +258,203 @@ codeunit 50003 "Generate E-Way Bill Enriched"
             until GSTDetailLedger.Next() = 0;
     end;
 
+    procedure GenerateEWayBillEnrichedShipment(No: Code[20])
+    var
+        SalesShipmentHdr: Record "Sales Shipment Header";
+        Setup: Record "GSP Authentication Setup";
+        Staging: Record "EWay Bill Staging";
+        GSPMgmt: Codeunit "GSP Management";
+        Client: HttpClient;
+        Request: HttpRequestMessage;
+        Response: HttpResponseMessage;
+        Headers: HttpHeaders;
+        Content: HttpContent;
+        RequestJson: Text;
+        ResponseText: Text;
+        Url: Text;
+        RequestId: Text;
+        JsonResp: JsonArray;
+    begin
+        Setup.Get();
+        SalesShipmentHdr.Get(No);
+
+        Url := Setup."Base URL" + '/test/enriched/ewb/ewayapi?action=GENEWAYBILL';
+
+        // JSONString();
+        RequestId := CreateGuid();
+        RequestJson := BuildEWayJsonShipment(SalesShipmentHdr);
+
+        if Setup."Show Message" then
+            Message(RequestJson);
+
+        Content.WriteFrom(RequestJson);
+        Content.GetHeaders(Headers);
+        Headers.Clear();
+        Headers.Add('Content-Type', 'application/json');
+
+        Request.Method('POST');
+        Request.SetRequestUri(Url);
+        Request.Content := Content;
+
+        Request.GetHeaders(Headers);
+
+        // 🔥 ADAEQUARE REQUIRED HEADERS
+        Headers.Add('Authorization', 'Bearer ' + GSPMgmt.GetValidAccessToken());
+        Headers.Add('username', '05AAACG2115R1ZN');
+        Headers.Add('password', 'abc123@@');
+        Headers.Add('gstin', '05AAACG2115R1ZN');
+        Headers.Add('requestid', RequestId);
+
+        // -------------------------------
+        // SEND REQUEST
+        // -------------------------------
+        Client.Send(Request, Response);
+        Response.Content.ReadAs(ResponseText);
+
+        if Setup."Show Message" then
+            Message(ResponseText);
+        // -------------------------------
+        // CREATE STAGING (INSERT ONCE)
+        // -------------------------------
+        Staging.Init();
+        Staging.Insert();
+        Staging."Document No." := SalesShipmentHdr."No.";
+        Staging."Request DateTime" := CurrentDateTime();
+        Staging."Request Id" := RequestId;
+        Staging."GSTIN Used" := '05AAACG2115R1ZN';
+
+        // Parse Response
+        ParseIRNResponseShipment(ResponseText, Staging);
+
+        Staging.Modify();
+    end;
+
+    local procedure ParseIRNResponseShipment(ResponseText: Text; var Staging: Record "EWay Bill Staging")
+    var
+        Root: JsonObject;
+        Result: JsonObject;
+        Token: JsonToken;
+    begin
+        Root.ReadFrom(ResponseText);
+
+        // Success
+        if Root.Get('success', Token) then
+            Staging.Success := Token.AsValue().AsBoolean();
+
+        // Message
+        if Root.Get('message', Token) then
+            Staging.Message := Token.AsValue().AsText();
+
+        // Result object
+        if Root.Get('result', Token) then begin
+            Result := Token.AsObject();
+
+            if Result.Get('ewayBillNo', Token) then
+                Staging."Eway Bill No" := Token.AsValue().AsBigInteger();
+
+            if Result.Get('ewayBillDate', Token) then
+                Staging."Eway Bill Date" := Token.AsValue().AsText();
+
+            if Result.Get('validUpto', Token) then
+                Staging."Valid Upto" := Token.AsValue().AsText();
+
+            if Result.Get('alert', Token) then
+                Staging."Alert" := Token.AsValue().AsText();
+        end;
+    end;
+
+    procedure BuildEWayJsonShipment(SalesShipmentHdr: Record "Sales Shipment Header"): Text
+    var
+        CompanyInfo: Record "Company Information";
+        States: Record State;
+        JsonObj: JsonObject;
+        ItemArray: JsonArray;
+        ItemObj: JsonObject;
+        SalesShipmentLine: Record "Sales Shipment Line";
+        JsonText: Text;
+        RandomNo: Integer;
+        NewDocNo: Text;
+    begin
+        //SalesShipmentHdr.CalcFields(Amount, "Amount Including VAT");
+        CalculateGSTAmounts(SalesShipmentHdr."No.", 0);
+        CompanyInfo.Get();
+        Randomize();
+        RandomNo := Random(900) + 100; // Generates 100–999
+
+        NewDocNo := SalesShipmentHdr."No." + '-' + Format(RandomNo);
+        // -------------------------
+        // Header Values
+        // -------------------------
+        JsonObj.Add('supplyType', 'O');
+        JsonObj.Add('subSupplyType', '1');
+        JsonObj.Add('docType', 'INV');
+        JsonObj.Add('docNo', NewDocNo);
+        JsonObj.Add('docDate', Format(SalesShipmentHdr."Posting Date", 0, '<Day,2>/<Month,2>/<Year4>'));
+        JsonObj.Add('fromGstin', '05AAACG2115R1ZN');
+        JsonObj.Add('fromTrdName', CompanyInfo."Name");
+        JsonObj.Add('fromAddr1', CompanyInfo."Address");
+        JsonObj.Add('fromAddr2', CompanyInfo."Address 2");
+        JsonObj.Add('fromPlace', CompanyInfo."City");
+        JsonObj.Add('fromPincode', CompanyInfo."Post Code");
+        JsonObj.Add('actFromStateCode', 29);
+        States.Get(CompanyInfo."State Code");
+        JsonObj.Add('fromStateCode', States."State Code (GST Reg. No.)");
+
+        JsonObj.Add('toGstin', '05AAACG2140A1ZL');
+        JsonObj.Add('toTrdName', SalesShipmentHdr."Bill-to Name");
+        JsonObj.Add('toAddr1', SalesShipmentHdr."Bill-to Address");
+        JsonObj.Add('toAddr2', SalesShipmentHdr."Bill-to Address 2");
+        JsonObj.Add('toPlace', SalesShipmentHdr."Bill-to City");
+        JsonObj.Add('toPincode', SalesShipmentHdr."Bill-to Post Code");
+        States.Get(SalesShipmentHdr."GST Bill-to State Code");
+        JsonObj.Add('actToStateCode', States."State Code (GST Reg. No.)");
+        JsonObj.Add('toStateCode', States."State Code (GST Reg. No.)");
+
+        JsonObj.Add('totalValue', Abs(AssVal) + Abs(CGSTAmt) + Abs(SGSTAmt) + Abs(IGSTAmt) + Abs(CessAmt));
+        JsonObj.Add('cgstValue', Abs(CGSTAmt));
+        JsonObj.Add('sgstValue', Abs(SGSTAmt));
+        JsonObj.Add('igstValue', Abs(IGSTAmt));
+        JsonObj.Add('totInvValue', Abs(AssVal) + Abs(CGSTAmt) + Abs(SGSTAmt) + Abs(IGSTAmt) + Abs(CessAmt));
+
+        JsonObj.Add('transMode', SalesShipmentHdr."Transport Method");
+        JsonObj.Add('transDistance', SalesShipmentHdr."Distance (Km)");
+        JsonObj.Add('transporterId', '');
+        JsonObj.Add('transporterName', '');
+        JsonObj.Add('transDocNo', '');
+        JsonObj.Add('transDocDate', '');
+        JsonObj.Add('vehicleNo', 'PVC1234');
+        JsonObj.Add('vehicleType', 'R');
+        JsonObj.Add('TransactionType', 1);
+
+        // -------------------------
+        // Item Loop
+        // -------------------------
+        SalesShipmentLine.Reset();
+        SalesShipmentLine.SetRange("Document No.", SalesShipmentHdr."No.");
+        if SalesShipmentLine.FindSet() then
+            repeat
+                Clear(ItemObj);
+                CalculateGSTAmounts(SalesShipmentHdr."No.", SalesShipmentLine."Line No.");
+                ItemObj.Add('productName', SalesShipmentLine."Description");
+                ItemObj.Add('productDesc', SalesShipmentLine."Description");
+                ItemObj.Add('hsnCode', SalesShipmentLine."HSN/SAC Code");
+                ItemObj.Add('quantity', SalesShipmentLine.Quantity);
+                ItemObj.Add('qtyUnit', SalesShipmentLine."Unit of Measure");
+                ItemObj.Add('cgstRate', CGSTRate);
+                ItemObj.Add('sgstRate', SGSTRate);
+                ItemObj.Add('igstRate', IGSTRate);
+                ItemObj.Add('taxableAmount', AssVal);
+                ItemArray.Add(ItemObj);
+
+            until SalesShipmentLine.Next() = 0;
+
+        JsonObj.Add('itemList', ItemArray);
+
+        // Convert JsonObject to Text
+        JsonObj.WriteTo(JsonText);
+        exit(JsonText);
+    end;
+
     var
         AssVal: Decimal;
         CGSTRate: Decimal;
