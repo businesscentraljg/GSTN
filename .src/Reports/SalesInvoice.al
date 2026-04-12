@@ -335,6 +335,9 @@ report 50003 "Sales Invoice"
             column(Vehicle_No_; "Vehicle No.")
             {
             }
+            column(Transporter_ID; "Transporter ID")
+            {
+            }
             column(E_Way_Bill_No_; "E-Way Bill No.")
             { }
             dataitem("Purchase Line1"; "Sales Invoice Line")
@@ -448,7 +451,9 @@ report 50003 "Sales Invoice"
                 column(Number_Integer; Number)
                 {
                 }
-
+                column(Serial_No_; "Serial No.")
+                {
+                }
 
 
                 trigger OnAfterGetRecord()
@@ -596,11 +601,13 @@ report 50003 "Sales Invoice"
                     //TotAmt:=0;
                 end;
             }
-            dataitem("Purchase Header Archive"; "Sales Header Archive")
+            dataitem("Purchase Header Archive";
+            "Sales Header Archive")
             {
                 DataItemLink = "No." = FIELD("No.");
                 DataItemLinkReference = "Sales Invoice Header";
-                column(NoofArchivedVersions_PurchaseHeaderArchive; "Purchase Header Archive"."No. of Archived Versions")
+                column(NoofArchivedVersions_PurchaseHeaderArchive;
+                "Purchase Header Archive"."No. of Archived Versions")
                 {
                 }
                 column(DateArchived_PurchaseHeaderArchive; "Purchase Header Archive"."Date Archived")

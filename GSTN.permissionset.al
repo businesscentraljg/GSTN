@@ -27,5 +27,6 @@ permissionset 50000 GSTN
         report "Sales Invoice" = X,
         report "Sales Order" = X,
         report "Sales Quote" = X,
-        page "Sales Invoice IRN QR FactBox" = X;
+        page "Sales Invoice IRN QR FactBox" = X,
+        codeunit "Event Subscriber" = X;
 }
