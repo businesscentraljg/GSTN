@@ -444,6 +444,7 @@ codeunit 50002 "EI Generate IRN Mgt"
         Clear(SerialNo);
         Line.Reset();
         Line.SetRange("Document No.", SalesInvHdr."No.");
+        Line.SetRange(Type, Line.Type::Item);
         if Line.FindSet() then
             repeat
                 SerialNo += 1;
