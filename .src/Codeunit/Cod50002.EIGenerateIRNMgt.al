@@ -411,8 +411,8 @@ codeunit 50002 "EI Generate IRN Mgt"
         DistVal.SetValue(DistInt);
         EwbDtls.Add('Distance', DistVal);
 
-        if SalesInvHdr."Tranport Document Number" <> '' then
-            EwbDtls.Add('Transdocno', SalesInvHdr."Tranport Document Number");
+        if SalesInvHdr."Transport Document Number" <> '' then
+            EwbDtls.Add('Transdocno', SalesInvHdr."Transport Document Number");
         if SalesInvHdr."Transport Document Date" <> 0D then
             EwbDtls.Add('TransdocDt', SalesInvHdr."Transport Document Date");
 

@@ -11,9 +11,9 @@ tableextension 50003 "Sales Shipment Header Ext" extends "Sales Shipment Header"
             Caption = 'Transporter ID';
             DataClassification = ToBeClassified;
         }
-        field(60001; "Tranport Document Number"; Code[20])
+        field(60001; "Transport Document Number"; Code[20])
         {
-            Caption = 'Tranport Document Number';
+            Caption = 'Transport Document Number';
             DataClassification = ToBeClassified;
         }
         field(60002; "Transport Document Date"; Date)

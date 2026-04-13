@@ -16,7 +16,7 @@ pageextension 50004 "Sales Order" extends "Sales Order"
             {
                 ApplicationArea = All;
             }
-            field("Tranport Document Number"; Rec."Tranport Document Number")
+            field("Transport Document Number"; Rec."Transport Document Number")
             {
                 ApplicationArea = All;
             }
