@@ -28,6 +28,10 @@ page 50002 "E-Invoice IRN Staging"
                 {
                     ToolTip = 'Specifies the value of the Success field.', Comment = '%';
                 }
+                field("IRN Cancel Success"; Rec."IRN Cancel Success")
+                {
+                    ToolTip = 'Specifies the value of the IRN Cancel Success field.', Comment = '%';
+                }
                 field(Message; Rec.Message)
                 {
                     ToolTip = 'Specifies the value of the Message field.', Comment = '%';

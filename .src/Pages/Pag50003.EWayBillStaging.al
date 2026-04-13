@@ -22,6 +22,10 @@ page 50003 "EWay Bill Staging"
                 {
                     ToolTip = 'Specifies the value of the Success field.', Comment = '%';
                 }
+                field("EWay Bill Cancel Success"; Rec."EWay Bill Cancel Success")
+                {
+                    ToolTip = 'Specifies the value of the EWay Bill Cancel Success field.', Comment = '%';
+                }
                 field(Message; Rec.Message)
                 {
                     ToolTip = 'Specifies the value of the Message field.', Comment = '%';

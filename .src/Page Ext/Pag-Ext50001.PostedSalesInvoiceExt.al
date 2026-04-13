@@ -57,10 +57,8 @@ pageextension 50001 "Posted Sales Invoice Ext1" extends "Posted Sales Invoice"
                 Promoted = true;
                 PromotedCategory = Process;
                 trigger OnAction()
-                var
-
                 begin
-
+                    CancelIRN();
                 end;
             }
             action("Generate E-Way Bill Enriched")
@@ -153,6 +151,25 @@ pageextension 50001 "Posted Sales Invoice Ext1" extends "Posted Sales Invoice"
             if not Confirm('Do you want to cancel E-Way Bill for this document?') then
                 exit;
             EWayBillMgt.CancelEWayBill(Rec."No.");
+        end;
+    end;
+
+    local procedure CancelIRN()
+    var
+        EWayBillMgt: Codeunit "Generate E-Way Bill Enriched";
+        Staging: Record "E-Invoice IRN Staging";
+    begin
+        Rec.TestField("IRN Hash");
+
+        Staging.Reset();
+        Staging.SetRange("Document No.", Rec."No.");
+        Staging.SetRange("IRN Cancel Success", true);
+        if Staging.FindFirst() then begin
+            Error('IRN already cancelled for this document');
+        end else begin
+            if not Confirm('Do you want to cancel IRN for this document?') then
+                exit;
+            EWayBillMgt.CancelIRN_Invoice(Rec."No.");
         end;
     end;
 }

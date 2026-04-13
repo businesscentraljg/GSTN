@@ -16,6 +16,11 @@ tableextension 50000 "Sales Invoice Header Ext" extends "Sales Invoice Header"
             Caption = 'Eway Bill Cancel';
             DataClassification = ToBeClassified;
         }
+        field(50002; "IRN Cancel"; Boolean)
+        {
+            Caption = 'IRN Cancel';
+            DataClassification = ToBeClassified;
+        }
         field(60000; "Transporter ID"; Code[20])
         {
             Caption = 'Transporter ID';

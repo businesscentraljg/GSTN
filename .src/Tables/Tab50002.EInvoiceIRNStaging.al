@@ -41,6 +41,7 @@ table 50002 "E-Invoice IRN Staging"
         field(24; "Remarks"; Text[250]) { }
         field(25; "InfCd"; Text[250]) { }
         field(26; "Desc"; Text[250]) { }
+        field(27; "IRN Cancel Success"; Boolean) { }
     }
 
     keys
