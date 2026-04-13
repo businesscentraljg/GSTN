@@ -6,6 +6,11 @@ tableextension 50003 "Sales Shipment Header Ext" extends "Sales Shipment Header"
 {
     fields
     {
+        field(50001; "Eway Bill Cancel"; Boolean)
+        {
+            Caption = 'Eway Bill Cancel';
+            DataClassification = ToBeClassified;
+        }
         field(60000; "Transporter ID"; Code[20])
         {
             Caption = 'Transporter ID';

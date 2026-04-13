@@ -81,10 +81,8 @@ pageextension 50001 "Posted Sales Invoice Ext1" extends "Posted Sales Invoice"
                 Promoted = true;
                 PromotedCategory = Process;
                 trigger OnAction()
-                var
-
                 begin
-
+                    CancelEWayBill();
                 end;
             }
         }
@@ -136,6 +134,25 @@ pageextension 50001 "Posted Sales Invoice Ext1" extends "Posted Sales Invoice"
                     exit;
                 EWayBillMgt.GenerateEWayBillEnriched(Rec."No.");
             end;
+        end;
+    end;
+
+    local procedure CancelEWayBill()
+    var
+        EWayBillMgt: Codeunit "Generate E-Way Bill Enriched";
+        Staging: Record "EWay Bill Staging";
+    begin
+        Rec.TestField("E-Way Bill No.");
+
+        Staging.Reset();
+        Staging.SetRange("Document No.", Rec."No.");
+        Staging.SetRange("EWay Bill Cancel Success", true);
+        if Staging.FindFirst() then begin
+            Error('E-Way Bill already cancelled for this document');
+        end else begin
+            if not Confirm('Do you want to cancel E-Way Bill for this document?') then
+                exit;
+            EWayBillMgt.CancelEWayBill(Rec."No.");
         end;
     end;
 }

@@ -7,6 +7,8 @@ using Microsoft.Finance.GST.Base;
 codeunit 50003 "Generate E-Way Bill Enriched"
 {
     Permissions = tabledata "Sales Invoice Header" = rim;
+
+    #region EWAY bill Sales Invoice Enriched
     procedure GenerateEWayBillEnriched(PostedInvoiceNo: Code[20])
     var
         SalesInvHdr: Record "Sales Invoice Header";
@@ -238,7 +240,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         JsonObj.WriteTo(JsonText);
         exit(JsonText);
     end;
-
+    #endregion
     local procedure CalculateGSTAmounts(DocNo: Code[20]; DocLineNo: Integer)
     var
         GSTDetailLedger: Record "Detailed GST Ledger Entry";
@@ -303,6 +305,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
             exit('O');
     end;
 
+    #region EWAY bill Sales Shipment Enriched
     procedure GenerateEWayBillEnrichedShipment(No: Code[20])
     var
         SalesShipmentHdr: Record "Sales Shipment Header";
@@ -502,7 +505,121 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         JsonObj.WriteTo(JsonText);
         exit(JsonText);
     end;
+    #endregion
 
+    #region Cancel EWay Bill
+    procedure CancelEWayBill(PostedInvoiceNo: Code[20])
+    var
+        SalesInvHdr: Record "Sales Invoice Header";
+        Setup: Record "GSP Authentication Setup";
+        Staging: Record "EWay Bill Staging";
+        CompanyInfo: Record "Company Information";
+        GSPMgmt: Codeunit "GSP Management";
+        Client: HttpClient;
+        Request: HttpRequestMessage;
+        Response: HttpResponseMessage;
+        Headers: HttpHeaders;
+        Content: HttpContent;
+        RequestJson: Text;
+        ResponseText: Text;
+        Url: Text;
+        RequestId: Text;
+        JsonResp: JsonArray;
+    begin
+        Setup.Get();
+        CompanyInfo.Get();
+        SalesInvHdr.Get(PostedInvoiceNo);
+
+        Url := Setup."Base URL" + '/test/enriched/ewb/ewayapi?action=CANEWB';
+
+        // JSONString();
+        RequestId := CreateGuid();
+        // 🔹 Prepare JSON Body
+        RequestJson :=
+          '{' +
+            '"ewbNo": ' + Format(SalesInvHdr."E-Way Bill No.") + ',' +
+            '"cancelRsnCode": 2,' +
+            '"cancelRmrk": "Cancelled the order"' +
+          '}';
+
+        if Setup."Show Message" then
+            Message(RequestJson);
+
+        Content.WriteFrom(RequestJson);
+        Content.GetHeaders(Headers);
+        Headers.Clear();
+        Headers.Add('Content-Type', 'application/json');
+
+        Request.Method('POST');
+        Request.SetRequestUri(Url);
+        Request.Content := Content;
+
+        Request.GetHeaders(Headers);
+
+        // 🔥 ADAEQUARE REQUIRED HEADERS
+        Headers.Add('Authorization', 'Bearer ' + GSPMgmt.GetValidAccessToken());
+        Headers.Add('username', CompanyInfo."GST User Name");
+        Headers.Add('password', CompanyInfo."GST Password");
+        Headers.Add('gstin', CompanyInfo."GST Registration No.");
+        Headers.Add('requestid', RequestId);
+        if Setup."C Type" <> '' then
+            Headers.Add('ctype', Setup."C Type");
+
+        // -------------------------------
+        // SEND REQUEST
+        // -------------------------------
+        Client.Send(Request, Response);
+        Response.Content.ReadAs(ResponseText);
+
+        If Response.IsSuccessStatusCode() then begin
+            Response.Content.ReadAs(ResponseText);
+            if GuiAllowed then
+                if Setup."Show Message" then
+                    Message(ResponseText);
+        end else begin
+            Response.Content.ReadAs(ResponseText);
+            if GuiAllowed then
+                Error(ResponseText);
+        end;
+        // -------------------------------
+        // CREATE STAGING (INSERT ONCE)
+        // -------------------------------
+        Staging.Init();
+        Staging.Insert();
+        Staging."Document No." := SalesInvHdr."No.";
+        Staging."Request DateTime" := CurrentDateTime();
+        Staging."Request Id" := RequestId;
+        Staging."GSTIN Used" := CompanyInfo."GST Registration No.";
+
+        CancelEwayBillInvoice(ResponseText, Staging, SalesInvHdr);
+        Staging.Modify();
+
+
+    end;
+
+
+    local procedure CancelEwayBillInvoice(ResponseText: Text; var Staging: Record "EWay Bill Staging"; var SalesInvHdr: Record "Sales Invoice Header")
+    var
+        Root: JsonObject;
+        Result: JsonObject;
+        Token: JsonToken;
+    begin
+        Root.ReadFrom(ResponseText);
+
+        // Success
+        if Root.Get('success', Token) then begin
+            Staging."EWay Bill Cancel Success" := Token.AsValue().AsBoolean();
+            SalesInvHdr."Eway Bill Cancel" := Token.AsValue().AsBoolean();
+        end;
+        // Message
+        if Root.Get('message', Token) then
+            Staging.Message := Token.AsValue().AsText();
+
+        SalesInvHdr.Modify();
+    end;
+
+
+    #endregion
     var
         AssVal: Decimal;
         CGSTRate: Decimal;

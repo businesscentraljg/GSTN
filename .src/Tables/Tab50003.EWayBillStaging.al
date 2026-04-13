@@ -20,7 +20,7 @@ table 50003 "EWay Bill Staging"
         field(9; "Request Id"; Text[50]) { }
         field(10; "GSTIN Used"; Code[15]) { }
         field(11; "Request DateTime"; DateTime) { }
-
+        field(12; "EWay Bill Cancel Success"; Boolean) { }
     }
     keys
     {
