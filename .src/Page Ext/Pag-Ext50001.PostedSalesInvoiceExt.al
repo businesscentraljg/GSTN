@@ -21,7 +21,7 @@ pageextension 50001 "Posted Sales Invoice Ext1" extends "Posted Sales Invoice"
             {
                 ApplicationArea = All;
             }
-            field("Tranport Document Number"; Rec."Tranport Document Number")
+            field("Transport Document Number"; Rec."Transport Document Number")
             {
                 ApplicationArea = All;
             }
@@ -50,19 +50,41 @@ pageextension 50001 "Posted Sales Invoice Ext1" extends "Posted Sales Invoice"
                     GenerateIRN();
                 end;
             }
+            action("EI - Cancel IRN")
+            {
+                ApplicationArea = All;
+                Image = SendElectronicDocument;
+                Promoted = true;
+                PromotedCategory = Process;
+                trigger OnAction()
+                var
+
+                begin
+
+                end;
+            }
             action("Generate E-Way Bill Enriched")
             {
                 ApplicationArea = All;
                 Image = SendElectronicDocument;
                 Promoted = true;
                 PromotedCategory = Process;
-                //Visible = false;
+                trigger OnAction()
+                begin
+                    EWayBillEnriched();
+                end;
+            }
+            action("Cancellation of E-way")
+            {
+                ApplicationArea = All;
+                Image = SendElectronicDocument;
+                Promoted = true;
+                PromotedCategory = Process;
                 trigger OnAction()
                 var
-                    EWayBillMgt: Codeunit "Generate E-Way Bill Enriched";
+
                 begin
-                    //Rec.TestField("Customer GST Reg. No.");
-                    EWayBillMgt.GenerateEWayBillEnriched(Rec."No.");
+
                 end;
             }
         }
@@ -88,6 +110,31 @@ pageextension 50001 "Posted Sales Invoice Ext1" extends "Posted Sales Invoice"
                 if not Confirm('Do you want to generate IRN for this document?') then
                     exit;
                 IRNMgt.GenerateIRN(Rec."No.");
+            end;
+        end;
+    end;
+
+    local procedure EWayBillEnriched()
+    var
+        EWayBillMgt: Codeunit "Generate E-Way Bill Enriched";
+        Staging: Record "EWay Bill Staging";
+        ConfirmReupload: Boolean;
+    begin
+        // 🔍 Check existing E-Way Bill in staging
+        Staging.Reset();
+        Staging.SetRange("Document No.", Rec."No.");
+        Staging.SetRange(Success, true);
+        if Staging.FindFirst() then begin
+            Error('E-Way Bill already generated for this document');
+        end else begin
+            ConfirmReupload := true;
+            if Staging.FindFirst() then
+                ConfirmReupload := Dialog.Confirm('An E-Way Bill generation attempt already exists for this document. Do you want to generate again?');
+
+            if ConfirmReupload then begin
+                if not Confirm('Do you want to generate E-Way Bill for this document?') then
+                    exit;
+                EWayBillMgt.GenerateEWayBillEnriched(Rec."No.");
             end;
         end;
     end;

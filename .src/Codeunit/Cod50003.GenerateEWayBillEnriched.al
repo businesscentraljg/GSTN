@@ -6,6 +6,7 @@ using Microsoft.Finance.GST.Base;
 
 codeunit 50003 "Generate E-Way Bill Enriched"
 {
+    Permissions = tabledata "Sales Invoice Header" = rim;
     procedure GenerateEWayBillEnriched(PostedInvoiceNo: Code[20])
     var
         SalesInvHdr: Record "Sales Invoice Header";
@@ -63,6 +64,16 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         Client.Send(Request, Response);
         Response.Content.ReadAs(ResponseText);
 
+        If Response.IsSuccessStatusCode() then begin
+            Response.Content.ReadAs(ResponseText);
+            if GuiAllowed then
+                if Setup."Show Message" then
+                    Message(ResponseText);
+        end else begin
+            Response.Content.ReadAs(ResponseText);
+            if GuiAllowed then
+                Error(ResponseText);
+        end;
         // -------------------------------
         // CREATE STAGING (INSERT ONCE)
         // -------------------------------
@@ -78,16 +89,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
 
         Staging.Modify();
 
-        If Response.IsSuccessStatusCode() then begin
-            Response.Content.ReadAs(ResponseText);
-            if GuiAllowed then
-                //if Setup."Show Message" then
-                    Message(ResponseText);
-        end else begin
-            Response.Content.ReadAs(ResponseText);
-            if GuiAllowed then
-                Error(ResponseText);
-        end;
+
     end;
 
     local procedure ParseIRNResponse(ResponseText: Text; var Staging: Record "EWay Bill Staging"; var SalesInvHdr: Record "Sales Invoice Header")
@@ -95,6 +97,8 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         Root: JsonObject;
         Result: JsonObject;
         Token: JsonToken;
+        EWBDate: DateTime;
+        EWBTime: Time;
     begin
         Root.ReadFrom(ResponseText);
 
@@ -125,6 +129,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
             if Result.Get('alert', Token) then
                 Staging."Alert" := Token.AsValue().AsText();
         end;
+        SalesInvHdr.Modify();
     end;
 
     procedure BuildEWayJson(SalesInvHdr: Record "Sales Invoice Header"): Text
@@ -143,9 +148,11 @@ codeunit 50003 "Generate E-Way Bill Enriched"
     begin
         SalesInvHdr.CalcFields(Amount, "Amount Including VAT");
         CalculateGSTAmounts(SalesInvHdr."No.", 0);
+        CalculateAssVal(SalesInvHdr);
+        CalculateGSTHeader(SalesInvHdr."No.");
         CompanyInfo.Get();
         Randomize();
-        RandomNo := Random(900) + 100; // Generates 100–999
+        RandomNo := Random(900) + 1; // Generates 1–900
 
         NewDocNo := SalesInvHdr."No." + '-' + Format(RandomNo);
         // -------------------------
@@ -175,28 +182,30 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         States.Get(SalesInvHdr."GST Bill-to State Code");
         JsonObj.Add('actToStateCode', States."State Code (GST Reg. No.)");
         JsonObj.Add('toStateCode', States."State Code (GST Reg. No.)");
+        JsonObj.Add('transactionType', 1);
 
         JsonObj.Add('totalValue', SalesInvHdr."Amount Including VAT");
         JsonObj.Add('cgstValue', Abs(CGSTAmt));
         JsonObj.Add('sgstValue', Abs(SGSTAmt));
         JsonObj.Add('igstValue', Abs(IGSTAmt));
-        JsonObj.Add('totInvValue', Abs(AssVal) + Abs(CGSTAmt) + Abs(SGSTAmt) + Abs(IGSTAmt) + Abs(CessAmt));
+        JsonObj.Add('cessValue', Abs(CessAmt));
+        JsonObj.Add('totInvValue', Abs(AssVal) + Abs(TotalCGST) + Abs(TotalSGST) + Abs(TotalIGST) + Abs(TotalCess));
 
         JsonObj.Add('transMode', '1');
 
         DistInt := Round(SalesInvHdr."Distance (Km)", 1, '<');
         DistVal.SetValue(DistInt);
         JsonObj.Add('transDistance', DistVal);
-        JsonObj.Add('transporterId', SalesInvHdr."Transporter ID");
         if SalesInvHdr."Transport Name" <> '' then
             JsonObj.Add('transporterName', SalesInvHdr."Transport Name");
-        if SalesInvHdr."Tranport Document Number" <> '' then
-            JsonObj.Add('transDocNo', SalesInvHdr."Tranport Document Number");
+        JsonObj.Add('transporterid', SalesInvHdr."Transporter ID");
+        if SalesInvHdr."Transport Document Number" <> '' then
+            JsonObj.Add('transDocNo', SalesInvHdr."Transport Document Number");
         if SalesInvHdr."Transport Document Date" <> 0D then
             JsonObj.Add('transDocDate', SalesInvHdr."Transport Document Date");
         JsonObj.Add('vehicleNo', SalesInvHdr."Vehicle No.");
         JsonObj.Add('vehicleType', GetVechicalType(SalesInvHdr));
-        JsonObj.Add('TransactionType', 1);
+
 
         // -------------------------
         // Item Loop
@@ -212,11 +221,13 @@ codeunit 50003 "Generate E-Way Bill Enriched"
                 ItemObj.Add('productDesc', SalesInvLine."Description");
                 ItemObj.Add('hsnCode', SalesInvLine."HSN/SAC Code");
                 ItemObj.Add('quantity', SalesInvLine.Quantity);
-                ItemObj.Add('qtyUnit', SalesInvLine."Unit of Measure");
-                ItemObj.Add('cgstRate', CGSTRate);
+                ItemObj.Add('qtyUnit', SalesInvLine."Unit of Measure Code");
+                ItemObj.Add('taxableAmount', Abs(AssVal));
                 ItemObj.Add('sgstRate', SGSTRate);
+                ItemObj.Add('cgstRate', CGSTRate);
                 ItemObj.Add('igstRate', IGSTRate);
-                ItemObj.Add('taxableAmount', AssVal);
+                ItemObj.Add('cessRate', CessRate);
+                ItemObj.Add('cessAdvol', Abs(CessAmt));
                 ItemArray.Add(ItemObj);
 
             until SalesInvLine.Next() = 0;
@@ -232,7 +243,6 @@ codeunit 50003 "Generate E-Way Bill Enriched"
     var
         GSTDetailLedger: Record "Detailed GST Ledger Entry";
     begin
-        Clear(AssVal);
         Clear(CGSTRate);
         Clear(SGSTRate);
         Clear(IGSTRate);
@@ -251,7 +261,6 @@ codeunit 50003 "Generate E-Way Bill Enriched"
 
         if GSTDetailLedger.FindSet() then
             repeat
-                AssVal += GSTDetailLedger."GST Base Amount";
                 GSTComponentCode := GSTDetailLedger."GST Component Code";
                 case GSTDetailLedger."GST Component Code" of
 
@@ -505,4 +514,52 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         IGSTAmt: Decimal;
         CessAmt: Decimal;
         GSTComponentCode: Text;
+        ValDiscountAmt: Decimal;
+        TotalCGST: Decimal;
+        TotalSGST: Decimal;
+        TotalIGST: Decimal;
+        TotalCess: Decimal;
+
+    local procedure CalculateAssVal(SalesInvHdr: Record "Sales Invoice Header")
+    var
+        Line: Record "Sales Invoice Line";
+    begin
+        Clear(AssVal);
+        Clear(ValDiscountAmt);
+
+        Line.Reset();
+        Line.SetRange("Document No.", SalesInvHdr."No.");
+        if Line.FindSet() then
+            repeat
+                AssVal += Abs(Line."Line Amount" - Line."Line Discount Amount");
+                ValDiscountAmt += Line."Inv. Discount Amount";
+            until Line.Next() = 0;
+    end;
+
+    local procedure CalculateGSTHeader(DocNo: Code[20])
+    var
+        GSTDetailLedger: Record "Detailed GST Ledger Entry";
+    begin
+        Clear(TotalCGST);
+        Clear(TotalSGST);
+        Clear(TotalIGST);
+        Clear(TotalCess);
+
+        GSTDetailLedger.Reset();
+        GSTDetailLedger.SetRange("Document No.", DocNo);
+
+        if GSTDetailLedger.FindSet() then
+            repeat
+                case GSTDetailLedger."GST Component Code" of
+                    'CGST':
+                        TotalCGST += GSTDetailLedger."GST Amount";
+                    'SGST':
+                        TotalSGST += GSTDetailLedger."GST Amount";
+                    'IGST':
+                        TotalIGST += GSTDetailLedger."GST Amount";
+                    'CESS':
+                        TotalCess += GSTDetailLedger."GST Amount";
+                end;
+            until GSTDetailLedger.Next() = 0;
+    end;
 }
