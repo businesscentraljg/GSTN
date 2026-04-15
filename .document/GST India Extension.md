@@ -4,7 +4,6 @@
 This document describes the user process for the `GSTN` Business Central extension.
 It covers the current setup pages, customer/vendor actions, invoice actions, and staging pages.
 
-> NOTE: Replace the screenshot placeholders with actual images from Business Central.
 
 ---
 
@@ -35,7 +34,7 @@ It covers the current setup pages, customer/vendor actions, invoice actions, and
 
 ### Screenshot
 
-![GST Authentication Setup screenshot placeholder](screenshots/GST-authentication-setup-placeholder.png)
+![alt text](image.png)
 
 ---
 
@@ -47,6 +46,10 @@ It covers the current setup pages, customer/vendor actions, invoice actions, and
 3. Confirm the prompt to fetch and update GSTN details for the current customer.
 4. Review the updated customer GSTN fields.
 
+### Screenshot
+
+![alt text](image-1.png)
+
 ### Vendor
 1. Open the standard `Vendor Card` page.
 2. Use the `Fetch GSTN Details` action in the Processing actions.
@@ -55,8 +58,7 @@ It covers the current setup pages, customer/vendor actions, invoice actions, and
 
 ### Screenshot
 
-![Customer/Vendor fetch screenshot placeholder](screenshots/customer-vendor-fetch-placeholder.png)
-
+![alt text](image-2.png)
 ---
 
 ## 4. Posted Sales Invoice Actions
@@ -71,7 +73,7 @@ It covers the current setup pages, customer/vendor actions, invoice actions, and
 
 ### Screenshot
 
-![Posted Sales Invoice actions screenshot placeholder](screenshots/posted-sales-invoice-actions-placeholder.png)
+![alt text](image-3.png)
 
 ---
 
@@ -112,6 +114,4 @@ It covers the current setup pages, customer/vendor actions, invoice actions, and
 
 ## Notes
 
-- Replace the placeholders with actual screenshots from each page.
-- Update this document when new `GSTN` pages or actions are added.
-- Use the exact page names above when searching in Business Central.
+
