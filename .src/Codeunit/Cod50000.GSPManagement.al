@@ -1,20 +1,20 @@
-codeunit 50000 "GSP Management"
+codeunit 50000 "GST Management"
 {
     procedure GetValidAccessToken(): Text
     var
-        GSPSetup: Record "GSP Authentication Setup";
+        GSTSetup: Record "GST Authentication Setup";
     begin
-        GSPSetup.Get();
+        GSTSetup.Get();
 
-        if (GSPSetup."Access Token" = '') or (CurrentDateTime() >= GSPSetup."Token Expires At") then
+        if (GSTSetup."Access Token" = '') or (CurrentDateTime() >= GSTSetup."Token Expires At") then
             GenerateNewToken();
 
-        exit(GSPSetup."Access Token");
+        exit(GSTSetup."Access Token");
     end;
 
     local procedure GenerateNewToken()
     var
-        GSPSetup: Record "GSP Authentication Setup";
+        GSTSetup: Record "GST Authentication Setup";
         Client: HttpClient;
         Request: HttpRequestMessage;
         Response: HttpResponseMessage;
@@ -33,30 +33,30 @@ codeunit 50000 "GSP Management"
         RemainingSeconds: Integer;
         DaysToAdd: Integer;
     begin
-        GSPSetup.Get();
-        GSPSetup.TestField("GSP App ID");
-        GSPSetup.TestField("GSP App Secret");
-        GSPSetup.TestField("Base URL");
+        GSTSetup.Get();
+        GSTSetup.TestField("GST App ID");
+        GSTSetup.TestField("GST App Secret");
+        GSTSetup.TestField("Base URL");
 
-        Request.SetRequestUri(GSPSetup."Base URL" + '/gsp/authenticate?grant_type=token');
+        Request.SetRequestUri(GSTSetup."Base URL" + '/GST/authenticate?grant_type=token');
         Request.Method := 'POST';
 
         // Headers
         Request.GetHeaders(Headers);
-        Headers.Add('gspappid', GSPSetup."GSP App ID");
-        Headers.Add('gspappsecret', GSPSetup."GSP App Secret");
+        Headers.Add('GSTappid', GSTSetup."GST App ID");
+        Headers.Add('GSTappsecret', GSTSetup."GST App Secret");
 
         Client.Send(Request, Response);
 
         if not Response.IsSuccessStatusCode() then
-            Error('GSP token generation failed. Status: %1', Response.HttpStatusCode());
+            Error('GST token generation failed. Status: %1', Response.HttpStatusCode());
 
         // ✅ Step 1: Read response as Text
         Response.Content().ReadAs(ResponseText);
 
         // ✅ Step 2: Convert Text → JsonObject
         if not JsonObj.ReadFrom(ResponseText) then
-            Error('Invalid JSON response from GSP');
+            Error('Invalid JSON response from GST');
 
         // ✅ Step 3: Read fields safely
         if JsonObj.Get('access_token', JsonToken) then
@@ -86,13 +86,13 @@ codeunit 50000 "GSP Management"
 
 
         // Save to setup
-        GSPSetup."Access Token" := AccessToken;
-        GSPSetup."Token Type" := TokenType;
-        GSPSetup.Scope := Scope;
-        GSPSetup."Token Expires At" := ExpiryDT;
-        GSPSetup.JTI := JTI;
+        GSTSetup."Access Token" := AccessToken;
+        GSTSetup."Token Type" := TokenType;
+        GSTSetup.Scope := Scope;
+        GSTSetup."Token Expires At" := ExpiryDT;
+        GSTSetup.JTI := JTI;
 
-        GSPSetup.Modify();
+        GSTSetup.Modify();
     end;
 
 }

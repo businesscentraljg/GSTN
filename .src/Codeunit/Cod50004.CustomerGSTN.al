@@ -6,8 +6,8 @@ codeunit 50004 "Customer GSTN"
     procedure GSTNSearch(CustomerNo: Code[20])
     var
         Cust: Record Customer;
-        Setup: Record "GSP Authentication Setup";
-        GSPMgmt: Codeunit "GSP Management";
+        Setup: Record "GST Authentication Setup";
+        GSTMgmt: Codeunit "GST Management";
         Client: HttpClient;
         Request: HttpRequestMessage;
         Response: HttpResponseMessage;
@@ -29,7 +29,7 @@ codeunit 50004 "Customer GSTN"
         Request.SetRequestUri(Url);
 
         Request.GetHeaders(Headers);
-        Headers.Add('Authorization', 'Bearer ' + GSPMgmt.GetValidAccessToken());
+        Headers.Add('Authorization', 'Bearer ' + GSTMgmt.GetValidAccessToken());
         Response.Content().ReadAs(ResponseText);
 
         Client.Send(Request, Response);

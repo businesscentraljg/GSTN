@@ -1,6 +1,6 @@
-table 50000 "GSP Authentication Setup"
+table 50000 "GST Authentication Setup"
 {
-    Caption = 'GSP Authentication Setup';
+    Caption = 'GST Authentication Setup';
     DataClassification = ToBeClassified;
 
     fields
@@ -8,9 +8,9 @@ table 50000 "GSP Authentication Setup"
         field(1; "Primary Key"; Code[10])
         {
         }
-        field(2; "GSP App ID"; Text[100])
+        field(2; "GST App ID"; Text[100])
         { }
-        field(3; "GSP App Secret"; Text[100])
+        field(3; "GST App Secret"; Text[100])
         { }
 
         field(4; "Access Token"; Text[2048])

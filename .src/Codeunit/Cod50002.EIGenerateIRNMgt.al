@@ -4,10 +4,10 @@ codeunit 50002 "EI Generate IRN Mgt"
     procedure GenerateIRN(PostedInvoiceNo: Code[20])
     var
         SalesInvHdr: Record "Sales Invoice Header";
-        Setup: Record "GSP Authentication Setup";
+        Setup: Record "GST Authentication Setup";
         Staging: Record "E-Invoice IRN Staging";
         CompanyInfo: Record "Company Information";
-        GSPMgmt: Codeunit "GSP Management";
+        GSTMgmt: Codeunit "GST Management";
         Client: HttpClient;
         Request: HttpRequestMessage;
         Response: HttpResponseMessage;
@@ -56,7 +56,7 @@ codeunit 50002 "EI Generate IRN Mgt"
         Request.GetHeaders(Headers);
 
         // 🔥 ADAEQUARE REQUIRED HEADERS
-        Headers.Add('Authorization', 'Bearer ' + GSPMgmt.GetValidAccessToken());
+        Headers.Add('Authorization', 'Bearer ' + GSTMgmt.GetValidAccessToken());
         Headers.Add('user_name', CompanyInfo."GST User Name");
         Headers.Add('password', CompanyInfo."GST Password");
         Headers.Add('gstin', CompanyInfo."GST Registration No.");

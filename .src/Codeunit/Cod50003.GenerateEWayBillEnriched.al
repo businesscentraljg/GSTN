@@ -12,10 +12,10 @@ codeunit 50003 "Generate E-Way Bill Enriched"
     procedure GenerateEWayBillEnriched(PostedInvoiceNo: Code[20])
     var
         SalesInvHdr: Record "Sales Invoice Header";
-        Setup: Record "GSP Authentication Setup";
+        Setup: Record "GST Authentication Setup";
         Staging: Record "EWay Bill Staging";
         CompanyInfo: Record "Company Information";
-        GSPMgmt: Codeunit "GSP Management";
+        GSTMgmt: Codeunit "GST Management";
         Client: HttpClient;
         Request: HttpRequestMessage;
         Response: HttpResponseMessage;
@@ -52,7 +52,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         Request.GetHeaders(Headers);
 
         // 🔥 ADAEQUARE REQUIRED HEADERS
-        Headers.Add('Authorization', 'Bearer ' + GSPMgmt.GetValidAccessToken());
+        Headers.Add('Authorization', 'Bearer ' + GSTMgmt.GetValidAccessToken());
         Headers.Add('username', CompanyInfo."GST User Name");
         Headers.Add('password', CompanyInfo."GST Password");
         Headers.Add('gstin', CompanyInfo."GST Registration No.");
@@ -309,9 +309,9 @@ codeunit 50003 "Generate E-Way Bill Enriched"
     procedure GenerateEWayBillEnrichedShipment(No: Code[20])
     var
         SalesShipmentHdr: Record "Sales Shipment Header";
-        Setup: Record "GSP Authentication Setup";
+        Setup: Record "GST Authentication Setup";
         Staging: Record "EWay Bill Staging";
-        GSPMgmt: Codeunit "GSP Management";
+        GSTMgmt: Codeunit "GST Management";
         Client: HttpClient;
         Request: HttpRequestMessage;
         Response: HttpResponseMessage;
@@ -347,7 +347,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         Request.GetHeaders(Headers);
 
         // 🔥 ADAEQUARE REQUIRED HEADERS
-        Headers.Add('Authorization', 'Bearer ' + GSPMgmt.GetValidAccessToken());
+        Headers.Add('Authorization', 'Bearer ' + GSTMgmt.GetValidAccessToken());
         Headers.Add('username', '05AAACG2115R1ZN');
         Headers.Add('password', 'abc123@@');
         Headers.Add('gstin', '05AAACG2115R1ZN');
@@ -511,10 +511,10 @@ codeunit 50003 "Generate E-Way Bill Enriched"
     procedure CancelEWayBill(PostedInvoiceNo: Code[20])
     var
         SalesInvHdr: Record "Sales Invoice Header";
-        Setup: Record "GSP Authentication Setup";
+        Setup: Record "GST Authentication Setup";
         Staging: Record "EWay Bill Staging";
         CompanyInfo: Record "Company Information";
-        GSPMgmt: Codeunit "GSP Management";
+        GSTMgmt: Codeunit "GST Management";
         Client: HttpClient;
         Request: HttpRequestMessage;
         Response: HttpResponseMessage;
@@ -557,7 +557,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         Request.GetHeaders(Headers);
 
         // 🔥 ADAEQUARE REQUIRED HEADERS
-        Headers.Add('Authorization', 'Bearer ' + GSPMgmt.GetValidAccessToken());
+        Headers.Add('Authorization', 'Bearer ' + GSTMgmt.GetValidAccessToken());
         Headers.Add('username', CompanyInfo."GST User Name");
         Headers.Add('password', CompanyInfo."GST Password");
         Headers.Add('gstin', CompanyInfo."GST Registration No.");
@@ -625,10 +625,10 @@ codeunit 50003 "Generate E-Way Bill Enriched"
     procedure CancelIRN_Invoice(PostedInvoiceNo: Code[20])
     var
         SalesInvHdr: Record "Sales Invoice Header";
-        Setup: Record "GSP Authentication Setup";
+        Setup: Record "GST Authentication Setup";
         Staging: Record "E-Invoice IRN Staging";
         CompanyInfo: Record "Company Information";
-        GSPMgmt: Codeunit "GSP Management";
+        GSTMgmt: Codeunit "GST Management";
         Client: HttpClient;
         Request: HttpRequestMessage;
         Response: HttpResponseMessage;
@@ -671,7 +671,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         Request.GetHeaders(Headers);
 
         // 🔥 ADAEQUARE REQUIRED HEADERS
-        Headers.Add('Authorization', 'Bearer ' + GSPMgmt.GetValidAccessToken());
+        Headers.Add('Authorization', 'Bearer ' + GSTMgmt.GetValidAccessToken());
         Headers.Add('user_name', CompanyInfo."GST User Name");
         Headers.Add('password', CompanyInfo."GST Password");
         Headers.Add('gstin', CompanyInfo."GST Registration No.");

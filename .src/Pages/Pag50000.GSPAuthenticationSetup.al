@@ -1,9 +1,9 @@
-page 50000 "GSP Authentication Setup"
+page 50000 "GST Authentication Setup"
 {
     ApplicationArea = All;
-    Caption = 'GSP Authentication Setup';
+    Caption = 'GST Authentication Setup';
     PageType = Card;
-    SourceTable = "GSP Authentication Setup";
+    SourceTable = "GST Authentication Setup";
     UsageCategory = Administration;
 
     layout
@@ -18,13 +18,13 @@ page 50000 "GSP Authentication Setup"
                 {
                     ToolTip = 'Specifies the value of the Base URL field.', Comment = '%';
                 }
-                field("GSP App ID"; Rec."GSP App ID")
+                field("GST App ID"; Rec."GST App ID")
                 {
-                    ToolTip = 'Specifies the value of the GSP App ID field.', Comment = '%';
+                    ToolTip = 'Specifies the value of the GST App ID field.', Comment = '%';
                 }
-                field("GSP App Secret"; Rec."GSP App Secret")
+                field("GST App Secret"; Rec."GST App Secret")
                 {
-                    ToolTip = 'Specifies the value of the GSP App Secret field.', Comment = '%';
+                    ToolTip = 'Specifies the value of the GST App Secret field.', Comment = '%';
                 }
                 field("Access Token"; Rec."Access Token")
                 {
@@ -74,7 +74,7 @@ page 50000 "GSP Authentication Setup"
 
                     trigger OnAction()
                     var
-                        CU: Codeunit "GSP Management";
+                        CU: Codeunit "GST Management";
                     begin
                         if not Confirm('Do you want to Genrate Token?') then exit;
                         CU.GetValidAccessToken();
