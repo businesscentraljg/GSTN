@@ -11,11 +11,6 @@ tableextension 50003 "Sales Shipment Header Ext" extends "Sales Shipment Header"
             Caption = 'Eway Bill Cancel';
             DataClassification = ToBeClassified;
         }
-        field(50002; "IRN Cancel"; Boolean)
-        {
-            Caption = 'IRN Cancel';
-            DataClassification = ToBeClassified;
-        }
         field(60000; "Transporter ID"; Code[20])
         {
             Caption = 'Transporter ID';

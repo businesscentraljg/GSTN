@@ -6,7 +6,7 @@ pageextension 50005 "Sales Order Subform Ext" extends "Sales Order Subform"
 {
     layout
     {
-        addlast(Content)
+        addafter(Description)
         {
             field("Serial No."; Rec."Serial No.")
             {

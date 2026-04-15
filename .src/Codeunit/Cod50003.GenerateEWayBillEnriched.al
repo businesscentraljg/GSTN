@@ -721,7 +721,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         // Success
         if Root.Get('success', Token) then begin
             Staging."IRN Cancel Success" := Token.AsValue().AsBoolean();
-            SalesInvHdr."IRN Cancel" := Token.AsValue().AsBoolean();
+            SalesInvHdr.Cancelled := Token.AsValue().AsBoolean();
         end;
         // Message
         if Root.Get('message', Token) then
