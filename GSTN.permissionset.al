@@ -22,6 +22,7 @@ permissionset 50000 GSTN
         codeunit "Generate E-Way Bill Enriched" = X,
         codeunit "Vendor GSTN Search Management" = X,
         page "EWay Bill Staging" = X,
+        report "Customer Ledger Report" = X,
         report "GST-Sales Invoice" = X,
         report "Purchase Order" = X,
         report "Sales Invoice" = X,
