@@ -338,6 +338,9 @@ report 50003 "Sales Invoice"
             column(Transporter_ID; "Transporter ID")
             {
             }
+            column(Transporter_Name; "Transport Name")
+            {
+            }
             column(E_Way_Bill_No_; "E-Way Bill No.")
             { }
             dataitem("Purchase Line1"; "Sales Invoice Line")
