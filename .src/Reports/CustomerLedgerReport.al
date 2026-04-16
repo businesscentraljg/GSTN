@@ -92,10 +92,12 @@ report 50010 "Customer Ledger Report"
                     field(FromDate; FromDate)
                     {
                         Caption = 'From Date';
+                        ApplicationArea = All;
                     }
                     field(ToDate; ToDate)
                     {
                         Caption = 'To Date';
+                        ApplicationArea = All;
                     }
                 }
             }
