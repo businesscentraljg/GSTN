@@ -6,7 +6,8 @@ using Microsoft.Finance.GST.Base;
 
 codeunit 50003 "Generate E-Way Bill Enriched"
 {
-    Permissions = tabledata "Sales Invoice Header" = rim;
+    Permissions = tabledata "Sales Invoice Header" = rim,
+                tabledata "Sales Shipment Header" = rim;
 
     #region EWAY bill Sales Invoice Enriched
     procedure GenerateEWayBillEnriched(PostedInvoiceNo: Code[20])
@@ -150,7 +151,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
     begin
         SalesInvHdr.CalcFields(Amount, "Amount Including VAT");
         CalculateGSTAmounts(SalesInvHdr."No.", 0);
-        CalculateAssVal(SalesInvHdr);
+        CalculateAssVal(SalesInvHdr."No.");
         CalculateGSTHeader(SalesInvHdr."No.");
         CompanyInfo.Get();
         Randomize();
@@ -215,6 +216,8 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         SalesInvLine.Reset();
         SalesInvLine.SetRange("Document No.", SalesInvHdr."No.");
         SalesInvLine.SetRange(Type, SalesInvLine.Type::Item);
+        SalesInvLine.SetFilter("No.", '<>%1', '');
+        SalesInvLine.SetFilter(Quantity, '>%1', 0);
         if SalesInvLine.FindSet() then
             repeat
                 Clear(ItemObj);
@@ -305,12 +308,13 @@ codeunit 50003 "Generate E-Way Bill Enriched"
             exit('O');
     end;
 
-    #region EWAY bill Sales Shipment Enriched
+    #region Sales Shipment Enriched
     procedure GenerateEWayBillEnrichedShipment(No: Code[20])
     var
         SalesShipmentHdr: Record "Sales Shipment Header";
         Setup: Record "GST Authentication Setup";
         Staging: Record "EWay Bill Staging";
+        CompanyInfo: Record "Company Information";
         GSTMgmt: Codeunit "GST Management";
         Client: HttpClient;
         Request: HttpRequestMessage;
@@ -324,6 +328,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         JsonResp: JsonArray;
     begin
         Setup.Get();
+        CompanyInfo.Get();
         SalesShipmentHdr.Get(No);
 
         Url := Setup."Base URL" + '/test/enriched/ewb/ewayapi?action=GENEWAYBILL';
@@ -348,10 +353,12 @@ codeunit 50003 "Generate E-Way Bill Enriched"
 
         // 🔥 ADAEQUARE REQUIRED HEADERS
         Headers.Add('Authorization', 'Bearer ' + GSTMgmt.GetValidAccessToken());
-        Headers.Add('username', '05AAACG2115R1ZN');
-        Headers.Add('password', 'abc123@@');
-        Headers.Add('gstin', '05AAACG2115R1ZN');
+        Headers.Add('username', CompanyInfo."GST User Name");
+        Headers.Add('password', CompanyInfo."GST Password");
+        Headers.Add('gstin', CompanyInfo."GST Registration No.");
         Headers.Add('requestid', RequestId);
+        if Setup."C Type" <> '' then
+            Headers.Add('ctype', Setup."C Type");
 
         // -------------------------------
         // SEND REQUEST
@@ -359,8 +366,16 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         Client.Send(Request, Response);
         Response.Content.ReadAs(ResponseText);
 
-        if Setup."Show Message" then
-            Message(ResponseText);
+        If Response.IsSuccessStatusCode() then begin
+            Response.Content.ReadAs(ResponseText);
+            if GuiAllowed then
+                if Setup."Show Message" then
+                    Message(ResponseText);
+        end else begin
+            Response.Content.ReadAs(ResponseText);
+            if GuiAllowed then
+                Error(ResponseText);
+        end;
         // -------------------------------
         // CREATE STAGING (INSERT ONCE)
         // -------------------------------
@@ -369,7 +384,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         Staging."Document No." := SalesShipmentHdr."No.";
         Staging."Request DateTime" := CurrentDateTime();
         Staging."Request Id" := RequestId;
-        Staging."GSTIN Used" := '05AAACG2115R1ZN';
+        Staging."GSTIN Used" := CompanyInfo."GST Registration No.";
 
         // Parse Response
         ParseIRNResponseShipment(ResponseText, Staging, SalesShipmentHdr);
@@ -412,6 +427,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
             if Result.Get('alert', Token) then
                 Staging."Alert" := Token.AsValue().AsText();
         end;
+        SalesShipmentHdr.Modify();
     end;
 
     procedure BuildEWayJsonShipment(SalesShipmentHdr: Record "Sales Shipment Header"): Text
@@ -425,12 +441,16 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         JsonText: Text;
         RandomNo: Integer;
         NewDocNo: Text;
+        DistVal: JsonValue;
+        DistInt: Integer;
     begin
         //SalesShipmentHdr.CalcFields(Amount, "Amount Including VAT");
         CalculateGSTAmounts(SalesShipmentHdr."No.", 0);
+        CalculateAssVal(SalesShipmentHdr."No.");
+        CalculateGSTHeader(SalesShipmentHdr."No.");
         CompanyInfo.Get();
         Randomize();
-        RandomNo := Random(900) + 100; // Generates 100–999
+        RandomNo := Random(9) + 1; // Generates 1–9
 
         NewDocNo := SalesShipmentHdr."No." + '-' + Format(RandomNo);
         // -------------------------
@@ -439,9 +459,9 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         JsonObj.Add('supplyType', 'O');
         JsonObj.Add('subSupplyType', '1');
         JsonObj.Add('docType', 'INV');
-        JsonObj.Add('docNo', NewDocNo);
+        JsonObj.Add('docNo', SalesShipmentHdr."No.");
         JsonObj.Add('docDate', Format(SalesShipmentHdr."Posting Date", 0, '<Day,2>/<Month,2>/<Year4>'));
-        JsonObj.Add('fromGstin', '05AAACG2115R1ZN');
+        JsonObj.Add('fromGstin', CompanyInfo."GST Registration No.");
         JsonObj.Add('fromTrdName', CompanyInfo."Name");
         JsonObj.Add('fromAddr1', CompanyInfo."Address");
         JsonObj.Add('fromAddr2', CompanyInfo."Address 2");
@@ -451,7 +471,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         States.Get(CompanyInfo."State Code");
         JsonObj.Add('fromStateCode', States."State Code (GST Reg. No.)");
 
-        JsonObj.Add('toGstin', '05AAACG2140A1ZL');
+        JsonObj.Add('toGstin', SalesShipmentHdr."Customer GST Reg. No.");
         JsonObj.Add('toTrdName', SalesShipmentHdr."Bill-to Name");
         JsonObj.Add('toAddr1', SalesShipmentHdr."Bill-to Address");
         JsonObj.Add('toAddr2', SalesShipmentHdr."Bill-to Address 2");
@@ -460,28 +480,39 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         States.Get(SalesShipmentHdr."GST Bill-to State Code");
         JsonObj.Add('actToStateCode', States."State Code (GST Reg. No.)");
         JsonObj.Add('toStateCode', States."State Code (GST Reg. No.)");
+        JsonObj.Add('transactionType', 1);
 
         JsonObj.Add('totalValue', Abs(AssVal) + Abs(CGSTAmt) + Abs(SGSTAmt) + Abs(IGSTAmt) + Abs(CessAmt));
         JsonObj.Add('cgstValue', Abs(CGSTAmt));
         JsonObj.Add('sgstValue', Abs(SGSTAmt));
         JsonObj.Add('igstValue', Abs(IGSTAmt));
-        JsonObj.Add('totInvValue', Abs(AssVal) + Abs(CGSTAmt) + Abs(SGSTAmt) + Abs(IGSTAmt) + Abs(CessAmt));
+        JsonObj.Add('cessValue', Abs(CessAmt));
+        JsonObj.Add('totInvValue', Abs(AssVal) + Abs(TotalCGST) + Abs(TotalSGST) + Abs(TotalIGST) + Abs(TotalCess));
 
-        JsonObj.Add('transMode', SalesShipmentHdr."Transport Method");
-        JsonObj.Add('transDistance', SalesShipmentHdr."Distance (Km)");
-        JsonObj.Add('transporterId', '');
-        JsonObj.Add('transporterName', '');
-        JsonObj.Add('transDocNo', '');
-        JsonObj.Add('transDocDate', '');
-        JsonObj.Add('vehicleNo', 'PVC1234');
-        JsonObj.Add('vehicleType', 'R');
-        JsonObj.Add('TransactionType', 1);
+        JsonObj.Add('transMode', '1');
+
+        DistInt := Round(SalesShipmentHdr."Distance (Km)", 1, '<');
+        DistVal.SetValue(DistInt);
+        JsonObj.Add('transDistance', DistVal);
+        if SalesShipmentHdr."Transport Name" <> '' then
+            JsonObj.Add('transporterName', SalesShipmentHdr."Transport Name");
+        JsonObj.Add('transporterid', SalesShipmentHdr."Transporter ID");
+        if SalesShipmentHdr."Transport Document Number" <> '' then
+            JsonObj.Add('transDocNo', SalesShipmentHdr."Transport Document Number");
+        if SalesShipmentHdr."Transport Document Date" <> 0D then
+            JsonObj.Add('transDocDate', SalesShipmentHdr."Transport Document Date");
+        JsonObj.Add('vehicleNo', SalesShipmentHdr."Vehicle No.");
+        JsonObj.Add('vehicleType', GetVechicalTypeShipment(SalesShipmentHdr));
+
 
         // -------------------------
         // Item Loop
         // -------------------------
         SalesShipmentLine.Reset();
         SalesShipmentLine.SetRange("Document No.", SalesShipmentHdr."No.");
+        SalesShipmentLine.SetRange(Type, SalesShipmentLine.Type::Item);
+        SalesShipmentLine.SetFilter("No.", '<>%1', '');
+        SalesShipmentLine.SetFilter(Quantity, '>%1', 0);
         if SalesShipmentLine.FindSet() then
             repeat
                 Clear(ItemObj);
@@ -490,11 +521,13 @@ codeunit 50003 "Generate E-Way Bill Enriched"
                 ItemObj.Add('productDesc', SalesShipmentLine."Description");
                 ItemObj.Add('hsnCode', SalesShipmentLine."HSN/SAC Code");
                 ItemObj.Add('quantity', SalesShipmentLine.Quantity);
-                ItemObj.Add('qtyUnit', SalesShipmentLine."Unit of Measure");
-                ItemObj.Add('cgstRate', CGSTRate);
+                ItemObj.Add('qtyUnit', SalesShipmentLine."Unit of Measure Code");
+                ItemObj.Add('taxableAmount', Abs(AssVal));
                 ItemObj.Add('sgstRate', SGSTRate);
+                ItemObj.Add('cgstRate', CGSTRate);
                 ItemObj.Add('igstRate', IGSTRate);
-                ItemObj.Add('taxableAmount', AssVal);
+                ItemObj.Add('cessRate', CessRate);
+                ItemObj.Add('cessAdvol', Abs(CessAmt));
                 ItemArray.Add(ItemObj);
 
             until SalesShipmentLine.Next() = 0;
@@ -504,6 +537,15 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         // Convert JsonObject to Text
         JsonObj.WriteTo(JsonText);
         exit(JsonText);
+    end;
+
+    local procedure GetVechicalTypeShipment(SalesShipmentHdr: Record "Sales Shipment Header"): Text
+    begin
+        if SalesShipmentHdr."Vehicle Type" = SalesShipmentHdr."Vehicle Type"::Regular then
+            exit('R');
+
+        if SalesShipmentHdr."Vehicle Type" = SalesShipmentHdr."Vehicle Type"::ODC then
+            exit('O');
     end;
     #endregion
 
@@ -609,7 +651,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         // Success
         if Root.Get('success', Token) then begin
             Staging."EWay Bill Cancel Success" := Token.AsValue().AsBoolean();
-            SalesInvHdr."Eway Bill Cancel" := Token.AsValue().AsBoolean();
+            SalesInvHdr.Cancelled := Token.AsValue().AsBoolean();
         end;
         // Message
         if Root.Get('message', Token) then
@@ -731,6 +773,120 @@ codeunit 50003 "Generate E-Way Bill Enriched"
     end;
 
     #endregion
+
+    #region Cancel EWay Bill
+    procedure CancelShipmentEWayBill(No: Code[20])
+    var
+        SalesShipmentHdr: Record "Sales Shipment Header";
+        Setup: Record "GST Authentication Setup";
+        Staging: Record "EWay Bill Staging";
+        CompanyInfo: Record "Company Information";
+        GSTMgmt: Codeunit "GST Management";
+        Client: HttpClient;
+        Request: HttpRequestMessage;
+        Response: HttpResponseMessage;
+        Headers: HttpHeaders;
+        Content: HttpContent;
+        RequestJson: Text;
+        ResponseText: Text;
+        Url: Text;
+        RequestId: Text;
+        JsonResp: JsonArray;
+    begin
+        Setup.Get();
+        CompanyInfo.Get();
+        SalesShipmentHdr.Get(No);
+
+        Url := Setup."Base URL" + '/test/enriched/ewb/ewayapi?action=CANEWB';
+
+        // JSONString();
+        RequestId := CreateGuid();
+        // 🔹 Prepare JSON Body
+        RequestJson :=
+          '{' +
+            '"ewbNo": ' + Format(SalesShipmentHdr."E-Way Bill No.") + ',' +
+            '"cancelRsnCode": 2,' +
+            '"cancelRmrk": "Cancelled the order"' +
+          '}';
+
+        if Setup."Show Message" then
+            Message(RequestJson);
+
+        Content.WriteFrom(RequestJson);
+        Content.GetHeaders(Headers);
+        Headers.Clear();
+        Headers.Add('Content-Type', 'application/json');
+
+        Request.Method('POST');
+        Request.SetRequestUri(Url);
+        Request.Content := Content;
+
+        Request.GetHeaders(Headers);
+
+        // 🔥 ADAEQUARE REQUIRED HEADERS
+        Headers.Add('Authorization', 'Bearer ' + GSTMgmt.GetValidAccessToken());
+        Headers.Add('username', CompanyInfo."GST User Name");
+        Headers.Add('password', CompanyInfo."GST Password");
+        Headers.Add('gstin', CompanyInfo."GST Registration No.");
+        Headers.Add('requestid', RequestId);
+        if Setup."C Type" <> '' then
+            Headers.Add('ctype', Setup."C Type");
+
+        // -------------------------------
+        // SEND REQUEST
+        // -------------------------------
+        Client.Send(Request, Response);
+        Response.Content.ReadAs(ResponseText);
+
+        If Response.IsSuccessStatusCode() then begin
+            Response.Content.ReadAs(ResponseText);
+            if GuiAllowed then
+                if Setup."Show Message" then
+                    Message(ResponseText);
+        end else begin
+            Response.Content.ReadAs(ResponseText);
+            if GuiAllowed then
+                Error(ResponseText);
+        end;
+        // -------------------------------
+        // CREATE STAGING (INSERT ONCE)
+        // -------------------------------
+        Staging.Init();
+        Staging.Insert();
+        Staging."Document No." := SalesShipmentHdr."No.";
+        Staging."Request DateTime" := CurrentDateTime();
+        Staging."Request Id" := RequestId;
+        Staging."GSTIN Used" := CompanyInfo."GST Registration No.";
+
+        CancelShipmentEwayBill(ResponseText, Staging, SalesShipmentHdr);
+        Staging.Modify();
+
+
+    end;
+
+
+    local procedure CancelShipmentEwayBill(ResponseText: Text; var Staging: Record "EWay Bill Staging"; var SalesShipmentHdr: Record "Sales Shipment Header")
+    var
+        Root: JsonObject;
+        Result: JsonObject;
+        Token: JsonToken;
+    begin
+        Root.ReadFrom(ResponseText);
+
+        // Success
+        if Root.Get('success', Token) then begin
+            Staging."EWay Bill Cancel Success" := Token.AsValue().AsBoolean();
+            SalesShipmentHdr."Eway Bill Cancel" := Token.AsValue().AsBoolean();
+        end;
+        // Message
+        if Root.Get('message', Token) then
+            Staging.Message := Token.AsValue().AsText();
+
+        SalesShipmentHdr.Modify();
+    end;
+
+
+    #endregion
     var
         AssVal: Decimal;
         CGSTRate: Decimal;
@@ -748,7 +904,7 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         TotalIGST: Decimal;
         TotalCess: Decimal;
 
-    local procedure CalculateAssVal(SalesInvHdr: Record "Sales Invoice Header")
+    local procedure CalculateAssVal(No: Code[20])
     var
         Line: Record "Sales Invoice Line";
     begin
@@ -756,7 +912,10 @@ codeunit 50003 "Generate E-Way Bill Enriched"
         Clear(ValDiscountAmt);
 
         Line.Reset();
-        Line.SetRange("Document No.", SalesInvHdr."No.");
+        Line.SetRange("Document No.", No);
+        Line.SetRange(Type, Line.Type::Item);
+        Line.SetFilter("No.", '<>%1', '');
+        Line.SetFilter(Quantity, '>%1', 0);
         if Line.FindSet() then
             repeat
                 AssVal += Abs(Line."Line Amount" - Line."Line Discount Amount");
