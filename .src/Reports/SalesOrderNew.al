@@ -3,7 +3,7 @@ report 50005 "Sales Order New"
     DefaultLayout = RDLC;
     RDLCLayout = '.src\Reports\SalesOrderNew.rdl';
     ApplicationArea = all;
-    UsageCategory = ReportsAndAnalysis;
+    //UsageCategory = ReportsAndAnalysis;
     Caption = 'Sales Order';
 
     dataset

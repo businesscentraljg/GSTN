@@ -3,7 +3,7 @@ report 50006 "Sales Quote New"
     DefaultLayout = RDLC;
     RDLCLayout = '.src\Reports\SalesQuoteNew.rdl';
     ApplicationArea = all;
-    UsageCategory = ReportsAndAnalysis;
+    //UsageCategory = ReportsAndAnalysis;
     Caption = 'Sales Quote';
 
     dataset

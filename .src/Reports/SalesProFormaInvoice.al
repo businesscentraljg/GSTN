@@ -3,7 +3,7 @@ report 50007 "Pro Forma Invoice"
     DefaultLayout = RDLC;
     RDLCLayout = '.src\Reports\SalesProFormaInvoice.rdl';
     ApplicationArea = all;
-    UsageCategory = ReportsAndAnalysis;
+    //UsageCategory = ReportsAndAnalysis;
     Caption = 'Pro Forma Invoice';
 
     dataset
