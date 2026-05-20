@@ -26,24 +26,6 @@ pageextension 50000 "Customer Card Ext1" extends "Customer Card"
                     Message('GSTN details fetched and updated successfully.');
                 end;
             }
-
-            action(PrintCustomerLedger)
-            {
-                Caption = 'Customer Ledger Report';
-                Image = Print;
-                ApplicationArea = All;
-                Promoted = true;
-                PromotedCategory = Process;
-                PromotedOnly = true;
-
-                trigger OnAction()
-                var
-                    CustLedgerEntry: Record Customer;
-                begin
-                    CustLedgerEntry.SetRange("No.", Rec."No.");
-                    Report.Run(Report::"Customer Ledger Report", true, false, CustLedgerEntry);
-                end;
-            }
         }
     }
 }
